@@ -1,72 +1,132 @@
 <?php
-if ( isset( $_POST['logout'] ) ) {
-	logout_netatmo();
-}
-?>
-<!doctype html>
-<html class="no-js" lang="">
 
-<head>
-	<meta charset="utf-8">
-	<meta http-equiv="x-ua-compatible" content="ie=edge">
-	<title>Ukkoherranlenkki 4 Netatmo</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="netatmo.css">
-</head>
-
-<body>
-
-<div id="timer">Haetaan päiväystä...</div>
-
-<?php
+if( ! isset( $_SESSION ) ) {
 	session_start();
-
-if ( ! isset( $_GET['code'] ) || ! isset( $_SESSION ) ) {
-	login_netatmo();
 }
 
-if ( isset( $_SESSION['state'] ) && ( $_SESSION['state'] === $_GET['state'] ) ) {
+// Read client credentials from a config file
+require 'config.php';
 
-	if ( ! isset( $_SESSION['access_token'] ) ) {
-		get_access_token();
-	}
+/**
+ * Print temperatures for all modules
+ */
+function print_temperatures() {
 
+	// Refresh expired token
 	if( time() > $_SESSION['token_expires'] ) {
-		refresh_token();
+		$token_status = refresh_token();
+		if ( false === $token_status ) {
+			throw new Exception( 'Refreshing tokens failed.' );
+		}
 	}
 
-	mikrogramma_debug( $_SESSION );
+	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token=' . $_SESSION['access_token'];
 
-	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token='
-	. $_SESSION['access_token'];
+	$remote_data = file_get_contents( $api_url );
 
-	$remote_data = @file_get_contents( $api_url );
-	$stations    = json_decode( $remote_data );
+	if ( false === $remote_data ) {
+		throw new Exception( 'Failed to get station data.' );
+	}
+
+	$stations = json_decode( $remote_data );
 
 	if ( null !== $stations ) {
-		//mikrogramma_debug( $stations );
 
+		$output = '';
 		// Take only the first station's info
 		$station = $stations->body->devices[0];
 
+		$output .= '<div class="modules">';
+
 		// Print the main module info
-		echo $station->module_name . ': ' . $station->dashboard_data->Temperature . ' &mdash; ' . date( 'j.n.Y H:i:s', $station->dashboard_data->time_utc ) . '<br/>';
+		$output .= get_module_info( $station );
 
 		// Print the info for each submodule
 		foreach ( $station->modules as $module ) {
-			echo $module->module_name . ': ' . $module->dashboard_data->Temperature . ' &mdash; ' . date( 'j.n.Y H:i:s', $module->dashboard_data->time_utc ) . '<br/>';
+			$output .= get_module_info( $module );
 		}
 
-		// Print session expiry info
-		echo 'Istunto vanhenee ' . date( 'j.n.Y H:i:s',  $_SESSION['token_expires'] ) . '<br/>';
-		echo '<form action="' . basename( $_SERVER['PHP_SELF'] ) . '" method="post">
-		<input type="hidden" name="logout" value="true" /><button type="submit">Kirjaudu ulos</button></form>';
+		$output .= '</div>';
+
+		$output .= '<p>Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
+		$output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s',  $_SESSION['token_expires'] ) . '.</p>';
+
+		return $output;
 	} else {
-		echo 'Istunto ei ole voimassa. <a href="' . basename( $_SERVER['PHP_SELF'] ) . '">Kirjaudu uudelleen.</a>';
+		return '<p>Istunto ei ole voimassa. <a href="' . basename( $_SERVER['PHP_SELF'] ) . '">Kirjaudu uudelleen.</a></p>';
 	}
-} else {
-	mikrogramma_debug( $_SESSION );
-	echo 'The state does not match. You may be a victim of CSRF. <a href="' . basename( $_SERVER['PHP_SELF'] ) . '">Kirjaudu uudelleen.</a>';
+}
+
+/**
+ * Get single module info
+ */
+function get_module_info( $module ) {
+
+	global $station_mac;
+
+	$output = '';
+	ob_start();
+	?>
+	<div class="module">
+		<div class="module__name">
+			<?php echo $module->module_name; ?>
+		</div>
+		<div class="module__temp">
+			<?php echo number_format( $module->dashboard_data->Temperature, 1 ); ?>
+		</div>
+		<div class="module__time">
+			<?php echo date( 'j.n.Y H:i:s', $module->dashboard_data->time_utc ); ?>
+		</div>
+		<?php
+
+		$output .= ob_get_clean();
+
+		$module_query = http_build_query(
+			array(
+				'access_token' => $_SESSION['access_token'],
+				'device_id'    => $station_mac,
+				'module_id'    => $module->_id,
+				'scale'        => 'max',
+				'real_time'    => 'true',
+				'type'         => 'Temperature',
+				'date_begin'   => ( time() - 24 * 60 * 60 ),
+				'limit'        => 400,
+			)
+		);
+		$module_api_url = 'https://api.netatmo.com/api/getmeasure?' . $module_query;
+
+		$module_history = file_get_contents( $module_api_url );
+		$module_history_json = json_decode( $module_history );
+
+		//mikrogramma_debug( $module_history_json );
+
+		$labels = array();
+		$series = array();
+
+		foreach ( $module_history_json->body as $data_point ) {
+
+			foreach( $data_point->value as $index => $value ) {
+				if( $index === 0 ) {
+					$labels[] = $data_point->beg_time;
+					$series[] = $data_point->value[0][0];
+				} else {
+					$labels[] = $data_point->beg_time + $data_point->step_time;
+					$series[] = $data_point->value[$index][0];
+				}
+			}
+		}
+
+		if ( $module->type === 'NAMain' || $module->type === 'NAModule4' ) {
+			$module_type = 'indoor';
+		} elseif ( $module->type === 'NAModule1' ) {
+			$module_type = 'outdoor';
+		}
+
+		$output .= '<div class="ct-chart ct-minor-seventh" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-labels="' . implode( ',', $labels ) . '" data-series="' . implode( ',', $series ) . '" data-module-type="' . $module_type . '"></div>';
+
+		$output .= '</div>';
+
+		return $output;
 }
 
 /**
@@ -74,10 +134,11 @@ if ( isset( $_SESSION['state'] ) && ( $_SESSION['state'] === $_GET['state'] ) ) 
  */
 function get_access_token() {
 
-	// Read client credentials from a config file
-	require_once 'Config.php';
-
 	$code = $_GET['code'];
+
+	global $client_id;
+	global $client_secret;
+	global $local_url;
 
 	$token_url = 'https://api.netatmo.com/oauth2/token';
 
@@ -118,8 +179,14 @@ function get_access_token() {
  */
 function refresh_token() {
 
-	// Read client credentials from a config file
-	require_once 'Config.php';
+	//require 'config.php';
+
+	global $client_id;
+	global $client_secret;
+
+	mikrogramma_debug( $client_id );
+	mikrogramma_debug( $client_secret );
+	mikrogramma_debug( $_SESSION );
 
 	$token_url = 'https://api.netatmo.com/oauth2/token';
 
@@ -144,38 +211,48 @@ function refresh_token() {
 	$context = stream_context_create( $opts );
 
 	$response = file_get_contents( $token_url, false, $context );
-	//mikrogramma_debug( $response );
-	$params = null;
-	$params = json_decode( $response, true );
 
-	$_SESSION['access_token']   = $params['access_token'];
-	$_SESSION['refresh_token']  = $params['refresh_token'];
-	$_SESSION['token_lifetime'] = $params['expires_in'];
-	$_SESSION['token_expires']  = time() + $params['expires_in'];
+	if ( false !== $response ) {
+		$params = json_decode( $response, true );
+
+		$_SESSION['access_token']   = $params['access_token'];
+		$_SESSION['refresh_token']  = $params['refresh_token'];
+		$_SESSION['token_lifetime'] = $params['expires_in'];
+		$_SESSION['token_expires']  = time() + $params['expires_in'];
+		return;
+	} else {
+		return false;
+	}
 }
 
+/**
+ * Authenticate using Netatmo OAuth2 dialog
+ * @link https://dev.netatmo.com/resources/technical/guides/authentication/authorizationcode
+ */
 function login_netatmo() {
 
-	require_once 'Config.php';
-
+	global $client_id;
 	global $local_url;
 
-	//session_start();
 	$_SESSION = array();
 
+	// Generate unique session ID
 	$_SESSION['state'] = md5( uniqid( rand(), true ) );
-	$dialog_url        = 'https://api.netatmo.com/oauth2/authorize?client_id='
-	. $client_id . '&redirect_uri=' . urlencode( $local_url )
-	. '&scope=read_station'
-	. '&state=' . $_SESSION['state'];
 
-	//echo $dialog_url;
+	// Build URL
+	$dialog_url_params = http_build_query(
+		array(
+			'client_id'    => $client_id,
+			'redirect_uri' => urlencode( $local_url ),
+			'scope'        => 'read_station',
+			'state'        => $_SESSION['state'],
+		)
+	);
+
+	$dialog_url = 'https://api.netatmo.com/oauth2/authorize?' . $dialog_url_params;
+
 	header( 'Location: ' . $dialog_url );
 	die();
-
-	//$output = "<script>top.location.href='" . $dialog_url . "'</script>";
-
-	//return $output;
 }
 
 function logout_netatmo() {
@@ -188,10 +265,10 @@ function logout_netatmo() {
  * Mikrogramma Debug function prints any variable or array
  */
 //phpcs:disable
-function mikrogramma_debug( $var) {
+function mikrogramma_debug( $var, $return = false ) {
 	$output = '';
 
-	$el_start = '<pre style="font-size: 12px; color: #222222; background-color: #fafafa; padding: 5px; margin: 5px; border: 1px solid #cccccc; position: relative; z-index: 9999;">';
+	$el_start = '<pre style="font-size: 12px; color: #222222; background-color: #fafafa; padding: 5px; margin: 5px; border: 1px solid #cccccc; position: relative; z-index: 9999; overflow: auto; text-align: left;">';
 	$el_end   = '</pre>' . PHP_EOL;
 
 
@@ -205,12 +282,10 @@ function mikrogramma_debug( $var) {
 		$output .= $el_start . 'Variable not defined.' . $el_end;
 	}
 
-	echo $output ;
+	if ( $return ) {
+		return $output;
+	} else {
+		echo $output;
+	}
 }
 //phpcs:enable
-
-?>
-
-	<script src="netatmo.js"></script>
-</body>
-</html>
