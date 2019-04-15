@@ -100,19 +100,20 @@ function get_module_info( $module ) {
 
 		//mikrogramma_debug( $module_history_json );
 
-		$labels = array();
-		$series = array();
+		$data_points = array();
 
 		foreach ( $module_history_json->body as $data_point ) {
 
 			foreach( $data_point->value as $index => $value ) {
 				if( $index === 0 ) {
-					$labels[] = $data_point->beg_time;
-					$series[] = $data_point->value[0][0];
+					$point_x = $data_point->beg_time * 1000;
+					$point_y = $data_point->value[0][0];
 				} else {
-					$labels[] = $data_point->beg_time + $data_point->step_time;
-					$series[] = $data_point->value[$index][0];
+					$point_x = ( $data_point->beg_time + $data_point->step_time ) * 1000;
+					$point_y = $data_point->value[$index][0];
 				}
+
+				$data_points[] = [ $point_x, $point_y ];
 			}
 		}
 
@@ -122,7 +123,7 @@ function get_module_info( $module ) {
 			$module_type = 'outdoor';
 		}
 
-		$output .= '<div class="ct-chart ct-minor-seventh" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-labels="' . implode( ',', $labels ) . '" data-series="' . implode( ',', $series ) . '" data-module-type="' . $module_type . '"></div>';
+		$output .= '<div class="ct-chart ct-minor-seventh" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $data_points ) . '" data-module-type="' . $module_type . '"></div>';
 
 		$output .= '</div>';
 

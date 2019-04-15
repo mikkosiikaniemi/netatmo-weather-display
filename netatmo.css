@@ -132,7 +132,11 @@ p {
 	padding: .5rem;
 	text-align: center;
 	flex-grow: 1;
-	min-width: 400px;
+	min-width: 300px;
+	flex-basis: 50%;
+	width: 50%;
+	max-width: 50%;
+	float:left;
 }
 
 .module__temp {
@@ -143,17 +147,10 @@ p {
 	font-size: 80%;
 }
 
-.ct-series-a .ct-line {
-  /* Set the colour of this series line */
-  stroke: red;
-  /* Control the thickness of your lines */
-  stroke-width: 2px;
+.ct-chart {
+	height: 250px;
 }
 
-.ct-chart[data-module-type="outdoor"] .ct-line {
-	stroke: blue;
-}
-
-.ct-chart[data-module-type="outdoor"] .ct-area {
-	fill: blue;
+p {
+	padding: 0 1rem;
 }

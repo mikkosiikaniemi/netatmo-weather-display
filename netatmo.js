@@ -63,83 +63,80 @@ function array_max(array) {
 function drawCharts() {
 
 	// Put all indoor temperatures to an array
-	var indoor_temps_string = '';
-	var indoor_temps;
+	var indoor_temps = [];
 	var indoor_modules = document.querySelectorAll('div[data-module-type="indoor"]');
 	if (indoor_modules.length >= 1) {
 		for (var k = 0; k < indoor_modules.length; k++) {
-			if (k > 0) {
-				indoor_temps_string += ',';
+			data_points = JSON.parse( indoor_modules[k].getAttribute('data-points') );
+			for( var l = 0; l < data_points.length; l++ ) {
+				indoor_temps.push( data_points[l][1] );
 			}
-			indoor_temps_string += indoor_modules[k].getAttribute('data-series');
 		}
-		indoor_temps = indoor_temps_string.split(',').map(Number);
 	}
 
 	// Put all outdoor temperatures to an array
-	var outdoor_temps_string = '';
-	var outdoor_temps;
+	var outdoor_temps = [];
 	var outdoor_modules = document.querySelectorAll('div[data-module-type="outdoor"]');
 	if (outdoor_modules.length >= 1) {
-		for (var l = 0; l < outdoor_modules.length; l++) {
-			if (l > 0) {
-				outdoor_temps_string += ',';
+		for (var m = 0; m < outdoor_modules.length; m++) {
+			data_points = JSON.parse( outdoor_modules[m].getAttribute('data-points') );
+			for( var n = 0; n < data_points.length; n++ ) {
+				outdoor_temps.push( data_points[n][1] );
 			}
-			outdoor_temps_string += outdoor_modules[l].getAttribute('data-series');
 		}
-		outdoor_temps = outdoor_temps_string.split(',').map(Number);
 	}
 
-	var placeholders = document.getElementsByClassName('ct-chart');
+	// Find the highest/lowest temperatures and set them as Y-axis options
+	outdoor_options = {
+		low: Math.floor(array_min(outdoor_temps)),
+		high: Math.ceil(array_max(outdoor_temps)),
+	};
 
-	if (placeholders.length >= 1) {
+	indoor_options = {
+		low: Math.floor(array_min(indoor_temps)),
+		high: Math.ceil(array_max(indoor_temps)),
+	};
 
-		for (i = 0; i < placeholders.length; i++) {
-			labels_array = placeholders[i].getAttribute('data-labels').split(',');
-			series_array = placeholders[i].getAttribute('data-series').split(',');
+	var min_temp, max_temp, line_color;
 
-			// Find the highest/lowest temperatures and set them as Y-axis options
-			if (placeholders[i].getAttribute('data-module-type') === 'indoor') {
-				axisY_options = {
-					low: Math.floor(array_min(indoor_temps)),
-					high: Math.ceil(array_max(indoor_temps)),
-					scaleMinSpace: 10,
-					onlyInteger: true
-				};
-			} else if (placeholders[i].getAttribute('data-module-type') === 'outdoor') {
-				axisY_options = {
-					low: Math.floor(array_min(outdoor_temps)),
-					high: Math.ceil(array_max(outdoor_temps)),
-					scaleMinSpace: 10,
-					onlyInteger: true
-				};
+	$('.ct-chart').each( function ( index, element ) {
+		element_id = '#' + $(element).attr('id');
+		element_data = $(element).data('points');
+		element_type = $(element).data('module-type');
+		//console.log( element_id, element_data );
+
+		if( element_type === 'outdoor' ) {
+			min_temp = outdoor_options.low;
+			max_temp = outdoor_options.high;
+			line_color = '#0000ff';
+		}
+		if( element_type === 'indoor' ) {
+			min_temp = indoor_options.low;
+			max_temp = indoor_options.high;
+			line_color = '#ff0000';
+		}
+
+		$.plot( element_id, [ {
+			data: element_data,
+			color: line_color,
+			shadowSize: 0,
+			lines: {
+				show: true,
+				fill: true,
 			}
-
-			previous_hour_value = null;
-
-			new Chartist.Line('#' + placeholders[i].getAttribute('id'), {
-				labels: labels_array,
-				series: [series_array]
+		} ], {
+			yaxis: {
+				position: 'right',
+				min: min_temp,
+				max: max_temp
 			},
-			{
-				axisX: {
-					labelInterpolationFnc: function (value, index) {
-						var hour_value = moment.unix(value).format('HH');
-
-						if (hour_value !== previous_hour_value) {
-							previous_hour_value = hour_value;
-							return hour_value;
-						} else {
-							return null;
-						}
-
-					}
-				},
-				fullWidth: true,
-				axisY: axisY_options,
-				showPoint: false,
-				showArea: true,
-			});
-		}
-	}
+			xaxis: {
+				mode: 'time',
+				timeformat: '%H',
+				timezone: 'browser',
+				twelveHourClock: false,
+				timebase: 'seconds',
+			}
+		} );
+	});
 }
