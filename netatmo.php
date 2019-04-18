@@ -1,9 +1,13 @@
 <?php
 
+// Resume PHP session
+if( ! isset( $_SESSION ) ) {
+	session_start();
+}
+
 // Read client credentials from a config file
 require 'config.php';
 
-DEFINE( 'NETATMO_COOKIE_NAME', 'netatmo' );
 DEFINE( 'NETATMO_UPDATE_INTERVAL', 3 * 60 );
 
 // Define time constants
@@ -19,17 +23,15 @@ define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
  */
 function print_temperatures() {
 
-	$session = crud_cookie( 'read' );
-
 	// Refresh expired token
-	if( time() > $session['token_expires'] ) {
+	if( time() > $_SESSION['token_expires'] ) {
 		$token_status = refresh_token();
 		if ( false === $token_status ) {
 			throw new Exception( 'Refreshing tokens failed.' );
 		}
 	}
 
-	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token=' . $session['access_token'];
+	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token=' . $_SESSION['access_token'];
 
 	$remote_data = file_get_contents( $api_url );
 
@@ -66,7 +68,7 @@ function print_temperatures() {
 		$output .= '</div>';
 
 		$output .= '<p class="data-time">Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
-		$output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s',  $session['token_expires'] ) . '.</p>';
+		$output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s',  $_SESSION['token_expires'] ) . '.</p>';
 
 		return $output;
 	} else {
@@ -80,8 +82,6 @@ function print_temperatures() {
 function get_module_info( $module ) {
 
 	global $station_mac;
-
-	$session = crud_cookie( 'read' );
 
 	if ( $module->type === 'NAMain' || $module->type === 'NAModule4' ) {
 		$module_type = 'indoor';
@@ -106,51 +106,50 @@ function get_module_info( $module ) {
 				<?php echo date( 'j.n.Y H:i:s', $module->dashboard_data->time_utc ); ?>
 			</div>
 		</div>
-		<?php
+	<?php
 
-		$output .= ob_get_clean();
+	$output .= ob_get_clean();
 
-		$module_query = http_build_query(
-			array(
-				'access_token' => $session['access_token'],
-				'device_id'    => $station_mac,
-				'module_id'    => $module->_id,
-				'scale'        => 'max',
-				'real_time'    => 'true',
-				'type'         => 'Temperature',
-				'date_begin'   => ( time() - 24 * 60 * 60 ),
-				'limit'        => 400,
-			)
-		);
-		$module_api_url = 'https://api.netatmo.com/api/getmeasure?' . $module_query;
+	$module_query = http_build_query(
+		array(
+			'access_token' => $_SESSION['access_token'],
+			'device_id'    => $station_mac,
+			'module_id'    => $module->_id,
+			'scale'        => 'max',
+			'real_time'    => 'true',
+			'type'         => 'Temperature',
+			'date_begin'   => ( time() - 24 * 60 * 60 ),
+			'limit'        => 400,
+		)
+	);
+	$module_api_url = 'https://api.netatmo.com/api/getmeasure?' . $module_query;
 
-		$module_history = file_get_contents( $module_api_url );
-		$module_history_json = json_decode( $module_history );
+	$module_history = file_get_contents( $module_api_url );
+	$module_history_json = json_decode( $module_history );
 
-		//mikrogramma_debug( $module_history_json );
+	//mikrogramma_debug( $module_history_json );
 
-		$data_points = array();
+	$data_points = array();
 
-		foreach ( $module_history_json->body as $data_point ) {
+	foreach ( $module_history_json->body as $data_point ) {
 
-			foreach( $data_point->value as $index => $value ) {
-				if( $index === 0 ) {
-					$point_x = $data_point->beg_time * 1000;
-					$point_y = $data_point->value[0][0];
-				} else {
-					$point_x = ( $data_point->beg_time + $data_point->step_time ) * 1000;
-					$point_y = $data_point->value[$index][0];
-				}
-
-				$data_points[] = [ $point_x, $point_y ];
+		foreach( $data_point->value as $index => $value ) {
+			if( $index === 0 ) {
+				$point_x = $data_point->beg_time * 1000;
+				$point_y = $data_point->value[0][0];
+			} else {
+				$point_x = ( $data_point->beg_time + $data_point->step_time ) * 1000;
+				$point_y = $data_point->value[$index][0];
 			}
+			$data_points[] = [ $point_x, $point_y ];
 		}
+	}
 
-		$output .= '<div class="flot-chart" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $data_points ) . '" data-module-type="' . $module_type . '"></div>';
+	$output .= '<div class="flot-chart" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $data_points ) . '" data-module-type="' . $module_type . '"></div>';
 
-		$output .= '</div>';
+	$output .= '</div>';
 
-		return $output;
+	return $output;
 }
 
 /**
@@ -191,8 +190,12 @@ function get_access_token() {
 	$response = file_get_contents( $token_url, false, $context );
 	$params = null;
 	$params = json_decode( $response, true );
-	$params['token_expires']  = time() + $params['expires_in'];
-	crud_cookie( 'update', $params );
+
+	foreach( array_keys( $params ) as $key ) {
+		$_SESSION[ $key ] = $params[ $key ];
+	}
+
+	$_SESSION['token_expires'] = time() + $params['expires_in'];
 }
 
 /**
@@ -200,21 +203,17 @@ function get_access_token() {
  */
 function refresh_token() {
 
-	//require 'config.php';
-
 	global $client_id;
 	global $client_secret;
 
 	$token_url = 'https://api.netatmo.com/oauth2/token';
-
-	$session = crud_cookie( 'read' );
 
 	$postdata = http_build_query(
 		array(
 			'grant_type'    => 'refresh_token',
 			'client_id'     => $client_id,
 			'client_secret' => $client_secret,
-			'refresh_token' => $session['refresh_token'],
+			'refresh_token' => $_SESSION['refresh_token'],
 		)
 	);
 
@@ -233,8 +232,10 @@ function refresh_token() {
 
 	if ( false !== $response ) {
 		$params = json_decode( $response, true );
+		foreach( array_keys( $params ) as $key ) {
+			$_SESSION[ $key ] = $params[ $key ];
+		}
 		$params['token_expires']  = time() + $params['expires_in'];
-		crud_cookie( 'update', $params );
 		return;
 	} else {
 		return false;
@@ -250,12 +251,8 @@ function login_netatmo() {
 	global $client_id;
 	global $local_url;
 
-	$session = array();
-
 	// Generate unique session ID
-	$session['state'] = md5( uniqid( rand(), true ) );
-
-	crud_cookie( 'create', $session );
+	$_SESSION['state'] = md5( uniqid( rand(), true ) );
 
 	// Build URL
 	$dialog_url_params = http_build_query(
@@ -263,57 +260,19 @@ function login_netatmo() {
 			'client_id'    => $client_id,
 			'redirect_uri' => urlencode( $local_url ),
 			'scope'        => 'read_station',
-			'state'        => $session['state'],
+			'state'        => $_SESSION['state'],
 		)
 	);
 
 	$dialog_url = 'https://api.netatmo.com/oauth2/authorize?' . $dialog_url_params;
-
 	header( 'Location: ' . $dialog_url );
 	die();
 }
 
 function logout_netatmo() {
-	crud_cookie( 'delete' );
-
+	session_unset();
 	echo 'Sinut on kirjattu ulos. <a href="' . basename( $_SERVER['PHP_SELF'] ) . '">Kirjaudu uudelleen.</a>';
 	die();
-}
-
-/**
- * Create, read, update, delete cookie
- */
-function crud_cookie( $action, $data = array() ) {
-
-	switch( $action ) {
-		case 'create':
-			setcookie( NETATMO_COOKIE_NAME, json_encode( $data ), time() + 2 * MONTH_IN_SECONDS );
-			header("Refresh:0");
-			break;
-		case 'read':
-			if ( isset( $_COOKIE[NETATMO_COOKIE_NAME] ) ) {
-				$cookie_data = json_decode( $_COOKIE[NETATMO_COOKIE_NAME], true );
-				return $cookie_data;
-			} else {
-				return false;
-			}
-			break;
-		case 'update':
-			$cookie_data = json_decode( $_COOKIE[NETATMO_COOKIE_NAME], true );
-			if ( is_array(( $cookie_data ) ) ) {
-				//mikrogramma_debug( 'JEE is_array', true, true );
-				$data = array_merge( $cookie_data, $data );
-			}
-			setcookie( NETATMO_COOKIE_NAME, json_encode( $data ), time() + 2 * MONTH_IN_SECONDS );
-			header("Refresh:0");
-			//mikrogramma_debug( $data, true, true );
-			break;
-		case 'delete':
-			unset( $_COOKIE[NETATMO_COOKIE_NAME] );
-			setcookie( NETATMO_COOKIE_NAME, '', time() - HOUR_IN_SECONDS );
-			break;
-	}
-
 }
 
 /**

@@ -66,7 +66,7 @@
 		progress_bar.stop().width(0);
 		progress_bar.animate({
 			width: '100%',
-		}, netatmo_update_interval * 1000, 'linear' );
+		}, netatmo.update_interval * 1000, 'linear' );
 
 		var data_points;
 
@@ -105,8 +105,8 @@
 		};
 
 		var indoor_options = {
-			low: Math.floor(array_min(indoor_temps)),
-			high: Math.ceil(array_max(indoor_temps)),
+			low: Math.round(array_min(indoor_temps)*2)/2 - 0.5,
+			high: Math.round(array_max(indoor_temps)*2)/2 + 0.5,
 		};
 
 		var min_temp, max_temp, line_color, xaxis_options, yaxis_options, font_spec;
@@ -151,7 +151,7 @@
 				line_color = '#29abe2';
 				yaxis_options.tickSize = null;
 				xaxis_options.ticks = 6;
-				console.log(index);
+
 				if(index > 1) {
 					yaxis_options.show = false;
 				}
@@ -186,7 +186,7 @@
 		drawCharts();
 
 		setInterval(updateClock, 500);
-		setInterval(updateTemperatures, netatmo_update_interval * 1000);
+		setInterval(updateTemperatures, netatmo.update_interval * 1000);
 
 	});
 
