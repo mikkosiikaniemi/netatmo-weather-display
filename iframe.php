@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Weather display web application for presenting temperature information
- * gathered by Netatmo weather sensors.
+ * A weather display web application for presenting temperature information
+ * gathered by locally installed Netatmo weather sensors.
  *
  * @author Mikko Siikaniemi / Mikrogramma Design
  * @link https://bitbucket.org/MikrogrammaDesign/netatmo
@@ -73,7 +73,6 @@ if ( isset( $_SESSION['state'] ) && ( $_SESSION['state'] === $_GET['state'] ) ) 
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<title>Ukkoherranlenkki 4 Netatmo</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="apple-mobile-web-app-capable" content="yes">
 	<link rel="stylesheet" href="netatmo.css">
 </head>
 
@@ -105,6 +104,7 @@ if ( isset( $_SESSION['state'] ) && ( $_SESSION['state'] === $_GET['state'] ) ) 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js" integrity="sha256-LMe2LItsvOs1WDRhgNXulB8wFpq885Pib0bnrjETvfI=" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.min.js" integrity="sha256-gCrSjRo/Z6W7Cfc1oEL6BH8HKjgiiO+ItV8A+z9Scpw=" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.resize.min.js" integrity="sha256-EM0o7Qv7O213xqRbn8IFc6QsSr02kAX1/z7musSfxx8=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.threshold.min.js" integrity="sha256-RgFycE5E183kX3Qvb9ogyMWG1Q/BaN1StpWF2sChHJw=" crossorigin="anonymous"></script>
 	<script>
 		var netatmo = {
 			update_interval: <?php echo NETATMO_UPDATE_INTERVAL; ?>,

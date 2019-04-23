@@ -5,10 +5,11 @@ if( ! isset( $_SESSION ) ) {
 	session_start();
 }
 
+// Set the correct timezone in order to print correctly formatted time
+date_default_timezone_set('Europe/Helsinki');
+
 // Read client credentials from a config file
 require 'config.php';
-
-DEFINE( 'NETATMO_UPDATE_INTERVAL', 3 * 60 );
 
 // Define time constants
 define( 'MINUTE_IN_SECONDS', 60 );
@@ -17,6 +18,9 @@ define( 'DAY_IN_SECONDS', 24 * HOUR_IN_SECONDS );
 define( 'WEEK_IN_SECONDS', 7 * DAY_IN_SECONDS );
 define( 'MONTH_IN_SECONDS', 30 * DAY_IN_SECONDS );
 define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
+
+// Define automatic update interval
+DEFINE( 'NETATMO_UPDATE_INTERVAL', 2 * MINUTE_IN_SECONDS );
 
 /**
  * Print temperatures for all modules
@@ -46,6 +50,8 @@ function print_temperatures() {
 		$output = '';
 		// Take only the first station's info
 		$station = $stations->body->devices[0];
+
+		//mikrogramma_debug( $station );
 
 		// Find the outdoor module and its index amongst connected modules
 		$outdoor_module_index = array_search( 'NAModule1', array_column( $station->modules, 'type' ) );
@@ -97,14 +103,43 @@ function get_module_info( $module ) {
 			<div class="module__details--name">
 				<?php echo $module->module_name; ?>
 			</div>
+			<?php if( 'indoor' === $module_type ) :
+				$co2_level = $module->dashboard_data->CO2;
+				$co2_color = false;
+				if ( $co2_level > 1 ) {
+					$co2_color = 'green';
+				}
+				if ( $co2_level > 700 ) {
+					$co2_color = 'light-green';
+				}
+				if ( $co2_level > 1000 ) {
+					$co2_color = 'yellow';
+				}
+				if ( $co2_level > 1500 ) {
+					$co2_color = 'orange';
+				}
+				if ( $co2_level > 2000 ) {
+					$co2_color = 'red';
+				}
+
+			?>
+			<div class="module__details--co2 co2-level-<?php echo $co2_color; ?>" data-co2-level="<?php echo $co2_level; ?>" title="<?php echo $co2_level; ?>"></div>
+			<div class="module__details--humidity" data-humidity="<?php echo $module->dashboard_data->Humidity; ?>"></div>
+			<?php endif; ?>
 			<div class="module__details--temp"><?php
 				$temperature = number_format( $module->dashboard_data->Temperature, 1 );
 				$temperature_parts = explode( '.', $temperature );
 				echo '<span class="module__details--temp__integer">' . $temperature_parts[0] . '</span><span class="module__details--temp__decimal">' . $temperature_parts[1] . '°</span>';
 			?></div>
-			<div class="module__details--time">
-				<?php echo date( 'j.n.Y H:i:s', $module->dashboard_data->time_utc ); ?>
+			<?php if( 'outdoor' === $module_type ) : ?>
+			<div class="module__details--minmax">
+				MIN <?php echo $module->dashboard_data->min_temp; ?>° klo <?php echo date( 'H:i',  $module->dashboard_data->date_min_temp ); ?>
+				MAX <?php echo $module->dashboard_data->max_temp; ?>° klo <?php echo date( 'H:i',  $module->dashboard_data->date_max_temp ); ?>
 			</div>
+			<?php endif; ?>
+			<span class="module__details--time" data-time-measured="<?php echo $module->dashboard_data->time_utc; ?>">
+				<?php echo human_time_difference( $module->dashboard_data->time_utc ); ?>
+			</span> <span>sitten</span>
 		</div>
 	<?php
 
@@ -235,7 +270,7 @@ function refresh_token() {
 		foreach( array_keys( $params ) as $key ) {
 			$_SESSION[ $key ] = $params[ $key ];
 		}
-		$params['token_expires']  = time() + $params['expires_in'];
+		$_SESSION['token_expires'] = time() + $params['expires_in'];
 		return;
 	} else {
 		return false;
@@ -273,6 +308,37 @@ function logout_netatmo() {
 	session_unset();
 	echo 'Sinut on kirjattu ulos. <a href="' . basename( $_SERVER['PHP_SELF'] ) . '">Kirjaudu uudelleen.</a>';
 	die();
+}
+
+function human_time_difference( $timestamp ) {
+
+	$seconds = time() - $timestamp;
+
+	$interval = floor( $seconds / YEAR_IN_SECONDS );
+
+	if ( $interval > 1 ) {
+		return $interval . " vuotta";
+	}
+	$interval = floor( $seconds / MONTH_IN_SECONDS );
+	if ( $interval > 1 ) {
+		return $interval . " kuukautta";
+	}
+	$interval = floor( $seconds / DAY_IN_SECONDS );
+	if ( $interval > 1 ) {
+		return $interval . " päivää";
+	}
+	$interval = floor( $seconds / HOUR_IN_SECONDS );
+	if ( $interval > 1 ) {
+		return $interval . " tuntia";
+	}
+	$interval = floor( $seconds / MINUTE_IN_SECONDS );
+	if ( $interval > 1 ) {
+		return $interval . " minuuttia";
+	}
+	if ( $interval >= 1 ) {
+		return "Minuutti";
+	}
+	return floor( $seconds ) . " sekuntia";
 }
 
 /**

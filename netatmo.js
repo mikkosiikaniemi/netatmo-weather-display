@@ -51,6 +51,45 @@
 		request.send();
 	}
 
+	function updateTimeDifferences() {
+		var time_difference_placeholders = document.getElementsByClassName('module__details--time');
+		for (var i = 0; i < time_difference_placeholders.length; i++) {
+			var time_measured = time_difference_placeholders[i].getAttribute('data-time-measured') * 1000;
+			time_difference_placeholders[i].innerHTML = timeSince( time_measured );
+		}
+	}
+
+	function timeSince(timestamp) {
+
+		var seconds = Math.floor( ( new Date() - timestamp ) / 1000 );
+
+		var interval = Math.floor(seconds / 31536000);
+
+		if (interval > 1) {
+			return interval + " vuotta";
+		}
+		interval = Math.floor(seconds / 2592000);
+		if (interval > 1) {
+			return interval + " kuukautta";
+		}
+		interval = Math.floor(seconds / 86400);
+		if (interval > 1) {
+			return interval + " päivää";
+		}
+		interval = Math.floor(seconds / 3600);
+		if (interval > 1) {
+			return interval + " tuntia";
+		}
+		interval = Math.floor(seconds / 60);
+		if (interval > 1) {
+			return interval + " minuuttia";
+		}
+		if (interval >= 1) {
+			return "Minuutti";
+		}
+		return Math.floor(seconds) + " sekuntia";
+	}
+
 	function array_min(array) {
 		return Math.min.apply(Math, array);
 	}
@@ -97,16 +136,13 @@
 
 		// Find the highest/lowest temperatures and set them as Y-axis options
 		var outdoor_options = {
-			//low: Math.floor(array_min(outdoor_temps)),
-			//high: Math.ceil(array_max(outdoor_temps)),
-
 			low: Math.round(array_min(outdoor_temps)*2)/2 - 0.5,
 			high: Math.round(array_max(outdoor_temps)*2)/2 + 0.5,
 		};
 
 		var indoor_options = {
-			low: Math.round(array_min(indoor_temps)*2)/2 - 0.5,
-			high: Math.round(array_max(indoor_temps)*2)/2 + 0.5,
+			low: Math.round(array_min(indoor_temps) * 2) / 2 - 0.5,
+			high: Math.round(array_max(indoor_temps) * 2) / 2 + 0.5,
 		};
 
 		var min_temp, max_temp, line_color, xaxis_options, yaxis_options, font_spec;
@@ -117,11 +153,10 @@
 			var element_type = $(element).data('module-type');
 
 			font_spec = {
-				size: 10,
+				size: 11,
 				lineHeight: 13,
 				family: "HelveticaNeue",
-				//variant: "small-caps",
-				color: "#777777"
+				color: "#aaaaaa"
 			};
 
 			xaxis_options = {
@@ -135,7 +170,10 @@
 
 			yaxis_options = {
 				position: 'right',
-				font: font_spec
+				font: font_spec,
+				tickDecimals: 0,
+				showTicks: true,
+				showMinorTicks: true
 			};
 
 			if (element_type === 'outdoor') {
@@ -160,6 +198,10 @@
 			$.plot(element_id, [{
 				data: element_data,
 				color: line_color,
+				threshold: {
+					below: 0,
+					color: "rgb(200, 20, 30)"
+				},
 				shadowSize: 0,
 				lines: {
 					show: true,
@@ -171,9 +213,9 @@
 				xaxis: xaxis_options,
 				yaxis: yaxis_options,
 				grid: {
-					color: '#333333',
-					backgroundColor: '#020202',
 					borderWidth: 0,
+					color: 'rgba(41,171,226,0.7)',
+					backgroundColor: '#020202',
 				},
 			});
 		});
@@ -185,8 +227,9 @@
 
 		drawCharts();
 
-		setInterval(updateClock, 500);
+		setInterval(updateClock, 1000);
 		setInterval(updateTemperatures, netatmo.update_interval * 1000);
+		setInterval(updateTimeDifferences, 5000);
 
 	});
 
