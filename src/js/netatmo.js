@@ -145,6 +145,8 @@
 			high: Math.round(array_max(indoor_temps) * 2) / 2 + 0.5,
 		};
 
+		console.log( outdoor_options, indoor_options );
+
 		var min_temp, max_temp, line_color, xaxis_options, yaxis_options, font_spec;
 
 		$('.flot-chart').each(function (index, element) {
@@ -155,8 +157,7 @@
 			font_spec = {
 				size: 11,
 				lineHeight: 13,
-				family: "HelveticaNeue",
-				color: "#aaaaaa"
+				family: "sans-serif",
 			};
 
 			xaxis_options = {
@@ -164,8 +165,10 @@
 				timeformat: '%H',
 				timezone: 'browser',
 				twelveHourClock: false,
-				timebase: 'seconds',
 				font: font_spec,
+				timeBase: 'milliseconds',
+				showTicks: true,
+				showMinorTicks: true,
 			};
 
 			yaxis_options = {
@@ -173,22 +176,19 @@
 				font: font_spec,
 				tickDecimals: 0,
 				showTicks: true,
-				showMinorTicks: true
+				showMinorTicks: true,
+				autoScale: "none"
 			};
 
 			if (element_type === 'outdoor') {
 				yaxis_options.min = outdoor_options.low;
 				yaxis_options.max = outdoor_options.high;
 				line_color = '#29abe2';
-				yaxis_options.tickSize = 2;
-				xaxis_options.ticks = 12;
 			}
 			if (element_type === 'indoor') {
 				yaxis_options.min = indoor_options.low;
 				yaxis_options.max = indoor_options.high;
 				line_color = '#29abe2';
-				yaxis_options.tickSize = null;
-				xaxis_options.ticks = 6;
 
 				if(index > 1) {
 					yaxis_options.show = false;
@@ -198,10 +198,27 @@
 			$.plot(element_id, [{
 				data: element_data,
 				color: line_color,
+				lines: {
+					show: true,
+					fill: true,
+					fillColor: { colors: [{ opacity: 0.2 }, { opacity: 0.5 }] }
+				},
 				threshold: {
-					below: 0,
+					below: 10,
 					color: "rgb(200, 20, 30)"
 				},
+			}], {
+				xaxis: xaxis_options,
+				yaxis : yaxis_options,
+				grid : {
+					color: 'rgba(41,171,226,0.7)',
+					backgroundColor: '#020202',
+					borderWidth: 0,
+				}
+			}
+			);/*
+				color: line_color,
+
 				shadowSize: 0,
 				lines: {
 					show: true,
@@ -218,6 +235,7 @@
 					backgroundColor: '#020202',
 				},
 			});
+			*/
 		});
 	}
 

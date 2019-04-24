@@ -1,0 +1,23 @@
+{
+  "name": "netatmo",
+  "version": "1.0.0",
+  "description": "A weather display web application for presenting temperature information gathered by locally installed Netatmo weather sensors.",
+  "main": "index.html",
+  "dependencies": {
+    "flot": "^3.0.2"
+  },
+  "devDependencies": {
+    "gulp": "^4.0.1",
+    "uglify-js": "^3.5.6"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@bitbucket.org/MikrogrammaDesign/netatmo.git"
+  },
+  "author": "Mikko Siikaniemi",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/MikrogrammaDesign/netatmo#readme"
+}

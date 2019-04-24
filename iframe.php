@@ -100,17 +100,22 @@ if ( isset( $_SESSION['state'] ) && ( $_SESSION['state'] === $_GET['state'] ) ) 
 		<button type="submit">Kirjaudu ulos</button>
 	</form>
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js" integrity="sha256-YcbK69I5IXQftf/mYD8WY0/KmEDCv1asggHpJk1trM8=" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js" integrity="sha256-LMe2LItsvOs1WDRhgNXulB8wFpq885Pib0bnrjETvfI=" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.min.js" integrity="sha256-gCrSjRo/Z6W7Cfc1oEL6BH8HKjgiiO+ItV8A+z9Scpw=" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.resize.min.js" integrity="sha256-EM0o7Qv7O213xqRbn8IFc6QsSr02kAX1/z7musSfxx8=" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.threshold.min.js" integrity="sha256-RgFycE5E183kX3Qvb9ogyMWG1Q/BaN1StpWF2sChHJw=" crossorigin="anonymous"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.js"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.canvaswrapper.js"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.colorhelpers.js"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.flot.js"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.flot.saturated.js"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.flot.browser.js"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.flot.drawSeries.js"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.flot.uiConstants.js"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.flot.time.js"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.flot.resize.js"></script>
+	<script language="javascript" type="text/javascript" src="vendor/flot/source/jquery.flot.threshold.js"></script>
 	<script>
 		var netatmo = {
-			update_interval: <?php echo NETATMO_UPDATE_INTERVAL; ?>,
-			access_token: <?php echo "'" . $_SESSION['access_token'] . "'"; ?>
+			update_interval: <?php echo NETATMO_UPDATE_INTERVAL; ?>
 		};
 	</script>
-	<script src="netatmo.js"></script>
+	<script language="javascript" type="text/javascript" src="src/js/netatmo.js"></script>
 </body>
 </html>
