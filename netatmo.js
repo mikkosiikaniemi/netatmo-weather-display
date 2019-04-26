@@ -35,7 +35,6 @@
 
 		request.onload = function () {
 			if (request.status === 200) {
-
 				placeholder.innerHTML = request.response;
 				drawCharts();
 			}
@@ -136,16 +135,20 @@
 
 		// Find the highest/lowest temperatures and set them as Y-axis options
 		var outdoor_options = {
-			low: Math.round(array_min(outdoor_temps)*2)/2 - 0.5,
-			high: Math.round(array_max(outdoor_temps)*2)/2 + 0.5,
+			low: array_min(outdoor_temps) - 0.5,
+			high: array_max(outdoor_temps) + 0.5,
 		};
 
 		var indoor_options = {
-			low: Math.round(array_min(indoor_temps) * 2) / 2 - 0.5,
-			high: Math.round(array_max(indoor_temps) * 2) / 2 + 0.5,
+			low: array_min(indoor_temps) - 0.5,
+			high: array_max(indoor_temps) + 0.5,
 		};
 
-		var min_temp, max_temp, line_color, xaxis_options, yaxis_options, font_spec;
+		var line_color, xaxis_options, yaxis_options, font_spec;
+
+		var d = new Date();
+		var startOfDay = d.setUTCHours(0,0,0,0);
+		startOfDay = startOfDay + d.getTimezoneOffset() * 60 * 1000;
 
 		$('.flot-chart').each(function (index, element) {
 			var element_id = '#' + $(element).attr('id');
@@ -216,6 +219,7 @@
 					borderWidth: 0,
 					color: 'rgba(41,171,226,0.7)',
 					backgroundColor: '#020202',
+					markings: [ { xaxis: { from: startOfDay, to: startOfDay }, color: "rgba(41,171,226,.2" } ]
 				},
 			});
 		});

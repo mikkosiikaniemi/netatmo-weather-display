@@ -123,8 +123,8 @@ function get_module_info( $module ) {
 				}
 
 			?>
-			<div class="module__details--co2 co2-level-<?php echo $co2_color; ?>" data-co2-level="<?php echo $co2_level; ?>" title="<?php echo $co2_level; ?>"></div>
-			<div class="module__details--humidity" data-humidity="<?php echo $module->dashboard_data->Humidity; ?>"></div>
+			<div class="module__details--co2 co2-level-<?php echo $co2_color; ?>" title="<?php echo $co2_level; ?>"></div>
+			<div class="module__details--humidity"><?php echo $module->dashboard_data->Humidity; ?> %</div>
 			<?php endif; ?>
 			<div class="module__details--temp"><?php
 				$temperature = number_format( $module->dashboard_data->Temperature, 1 );
@@ -133,8 +133,10 @@ function get_module_info( $module ) {
 			?></div>
 			<?php if( 'outdoor' === $module_type ) : ?>
 			<div class="module__details--minmax">
-				MIN <?php echo $module->dashboard_data->min_temp; ?>° klo <?php echo date( 'H:i',  $module->dashboard_data->date_min_temp ); ?>
-				MAX <?php echo $module->dashboard_data->max_temp; ?>° klo <?php echo date( 'H:i',  $module->dashboard_data->date_max_temp ); ?>
+				<svg xmlns="http://www.w3.org/2000/svg" width="65.6" height="95" viewBox="0 0 65.6 95"><path d="M64.5 42.8l-7.9-7.9-18.2 18.3V0H27.2v53.2L9 34.9l-7.9 7.9 31.7 31.7zM0 83.9h65.6V95H0z"/></svg>
+				<?php echo number_format( $module->dashboard_data->min_temp, 1); ?>°
+				<svg xmlns="http://www.w3.org/2000/svg" width="65.6" height="95" viewBox="0 0 65.6 95"><path d="M1.1 52.2L9 60.1l18.2-18.3V95h11.2V41.8l18.2 18.3 7.9-7.9-31.7-31.7zM0 0h65.6v11.1H0z"/></svg>
+				<?php echo number_format( $module->dashboard_data->max_temp, 1); ?>°
 			</div>
 			<?php endif; ?>
 			<span class="module__details--time" data-time-measured="<?php echo $module->dashboard_data->time_utc; ?>">
