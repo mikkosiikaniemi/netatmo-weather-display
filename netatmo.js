@@ -4,6 +4,9 @@
 	var weekDays = ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"];
 	//var weekDays = ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"];
 
+	var updateInterval = netatmo.update_interval;
+	var updateInProgress = false;
+
 	function updateClock() {
 		var currentTime = new Date();
 
@@ -26,7 +29,17 @@
 	}
 
 	function updateTemperatures() {
+		updateInProgress = true;
 		var placeholder = document.getElementById('temperatures');
+		var updateButton = document.getElementById('refresh');
+
+		updateButton.innerHTML = 'Päivitetään... <span id="updateTimer">0</span>';
+		var updateTicks = 1;
+		var timer = document.getElementById('updateTimer');
+		var tickUpdate = setInterval( function() {
+			timer.innerHTML = updateTicks;
+			updateTicks += 1;
+		}, 1000 );
 
 		var request = new XMLHttpRequest();
 		// Make an AJAX request to handler PHP file
@@ -37,10 +50,14 @@
 			if (request.status === 200) {
 				placeholder.innerHTML = request.response;
 				drawCharts();
+				console.log('Temperatures updated.');
 			}
 			else {
 				console.log('server error');
 			}
+			updateInProgress = false;
+			clearInterval( tickUpdate );
+			updateButton.innerHTML = "Päivitä";
 		};
 
 		request.onerror = function () {
@@ -54,6 +71,10 @@
 		var time_difference_placeholders = document.getElementsByClassName('module__details--time');
 		for (var i = 0; i < time_difference_placeholders.length; i++) {
 			var time_measured = time_difference_placeholders[i].getAttribute('data-time-measured') * 1000;
+			if( i === 1 && updateInProgress === false && Math.floor( new Date() / 1000 ) - time_difference_placeholders[i].getAttribute('data-time-measured') > updateInterval ) {
+				console.log( 'Interval update triggered.');
+				updateTemperatures();
+			}
 			time_difference_placeholders[i].innerHTML = timeSince( time_measured );
 		}
 	}
@@ -61,7 +82,6 @@
 	function timeSince(timestamp) {
 
 		var seconds = Math.floor( ( new Date() - timestamp ) / 1000 );
-
 		var interval = Math.floor(seconds / 31536000);
 
 		if (interval > 1) {
@@ -89,8 +109,14 @@
 		return Math.floor(seconds) + " sekuntia";
 	}
 
+	function removeNulls(value) {
+		return value !== null;
+	}
+
 	function array_min(array) {
-		return Math.min.apply(Math, array);
+		// Remove null values from temperatures first
+		var noNullsArray = array.filter(removeNulls);
+		return Math.min.apply(Math, noNullsArray);
 	}
 
 	function array_max(array) {
@@ -104,11 +130,10 @@
 		progress_bar.stop().width(0);
 		progress_bar.animate({
 			width: '100%',
-		}, netatmo.update_interval * 1000, 'linear' );
+		}, updateInterval * 1000, 'linear' );
 
-		var data_points;
+		var data_points, n;
 
-		//var data_points, outdoor_options, indoor_options;
 		// Put all indoor temperatures to an array
 		var indoor_temps = [];
 		var indoor_modules = document.querySelectorAll('div[data-module-type="indoor"]');
@@ -127,7 +152,11 @@
 		if (outdoor_modules.length >= 1) {
 			for (var m = 0; m < outdoor_modules.length; m++) {
 				data_points = JSON.parse(outdoor_modules[m].getAttribute('data-points'));
-				for (var n = 0; n < data_points.length; n++) {
+				for (n = 0; n < data_points.length; n++) {
+					outdoor_temps.push(data_points[n][1]);
+				}
+				data_points = JSON.parse(outdoor_modules[m].getAttribute('data-further-points'));
+				for (n = 0; n < data_points.length; n++) {
 					outdoor_temps.push(data_points[n][1]);
 				}
 			}
@@ -144,7 +173,7 @@
 			high: array_max(indoor_temps) + 0.5,
 		};
 
-		var line_color, xaxis_options, yaxis_options, font_spec;
+		var line_color, xaxis_options, yaxis_options, font_spec, data_series;
 
 		var d = new Date();
 		var startOfDay = d.setUTCHours(0,0,0,0);
@@ -153,6 +182,7 @@
 		$('.flot-chart').each(function (index, element) {
 			var element_id = '#' + $(element).attr('id');
 			var element_data = $(element).data('points');
+			var element_data2 = $(element).data('further-points');
 			var element_type = $(element).data('module-type');
 
 			font_spec = {
@@ -183,8 +213,11 @@
 				yaxis_options.min = outdoor_options.low;
 				yaxis_options.max = outdoor_options.high;
 				line_color = '#29abe2';
-				yaxis_options.tickSize = 2;
+				//yaxis_options.tickSize = 1;
+				yaxis_options.minTickSize = 2;
 				xaxis_options.ticks = 12;
+				data_series = [ element_data, element_data2 ];
+				//data_series = element_data2;
 			}
 			if (element_type === 'indoor') {
 				yaxis_options.min = indoor_options.low;
@@ -192,36 +225,83 @@
 				line_color = '#29abe2';
 				yaxis_options.tickSize = null;
 				xaxis_options.ticks = 6;
-
+				data_series = element_data;
 				if(index > 1) {
 					yaxis_options.show = false;
 				}
 			}
 
-			$.plot(element_id, [{
-				data: element_data,
-				color: line_color,
-				threshold: {
-					below: 0,
-					color: "rgb(200, 20, 30)"
-				},
-				shadowSize: 0,
-				lines: {
-					show: true,
-					fill: true,
-					fillColor: { colors: [{ opacity: 0.2 }, { opacity: 0.5 }] }
-				}
-			}],
-			{
-				xaxis: xaxis_options,
-				yaxis: yaxis_options,
-				grid: {
-					borderWidth: 0,
-					color: 'rgba(41,171,226,0.7)',
-					backgroundColor: '#020202',
-					markings: [ { xaxis: { from: startOfDay, to: startOfDay }, color: "rgba(41,171,226,.2" } ]
-				},
-			});
+			if( element_type === 'outdoor' ) {
+				$.plot(element_id, [
+					{
+						data: element_data2,
+						color: 'rgba(41,171,226,0.2)',
+						/*
+						threshold: {
+							below: 0,
+							color: "rgb(200, 20, 30, 0.2)"
+						},
+						*/
+						shadowSize: 0,
+						lines: {
+							show: true,
+							fill: false,
+							//fillColor: { colors: [{ opacity: 0.2 }, { opacity: 0.5 }] }
+						}
+					},
+					{
+						data: element_data,
+						color: line_color,
+						threshold: {
+							below: 0,
+							color: "rgb(200, 20, 30)"
+						},
+						shadowSize: 0,
+						lines: {
+							show: true,
+							fill: true,
+							fillColor: { colors: [{ opacity: 0.2 }, { opacity: 0.5 }] }
+						}
+					}
+				],
+				{
+					xaxis: xaxis_options,
+					yaxis: yaxis_options,
+					grid: {
+						borderWidth: 0,
+						color: 'rgba(41,171,226,0.7)',
+						backgroundColor: '#101010',
+						markings: [ { xaxis: { from: startOfDay, to: startOfDay }, color: "rgba(41,171,226,.2" } ]
+					},
+				});
+			}
+
+			if( element_type === 'indoor' ) {
+				$.plot(element_id, [{
+					data: data_series,
+					color: line_color,
+					threshold: {
+						below: 0,
+						color: "rgb(200, 20, 30)"
+					},
+					shadowSize: 0,
+					lines: {
+						show: true,
+						fill: true,
+						fillColor: { colors: [{ opacity: 0.2 }, { opacity: 0.5 }] }
+					}
+				}],
+				{
+					xaxis: xaxis_options,
+					yaxis: yaxis_options,
+					grid: {
+						borderWidth: 0,
+						color: 'rgba(41,171,226,0.7)',
+						backgroundColor: '#101010',
+						markings: [ { xaxis: { from: startOfDay, to: startOfDay }, color: "rgba(41,171,226,.2" } ]
+					},
+				});
+			}
 		});
 	}
 
@@ -231,9 +311,14 @@
 
 		drawCharts();
 
+		$('#refresh').click( function() {
+			console.log('Refresh called.');
+			updateTemperatures();
+		});
+
 		setInterval(updateClock, 1000);
-		setInterval(updateTemperatures, netatmo.update_interval * 1000);
-		setInterval(updateTimeDifferences, 5000);
+		//setInterval(updateTemperatures, netatmo.update_interval * 1000);
+		setInterval(updateTimeDifferences, 30000);
 
 	});
 

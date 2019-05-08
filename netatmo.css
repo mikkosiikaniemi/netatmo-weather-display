@@ -89,6 +89,8 @@ body {
 	margin: 0 auto;
 	background: #000;
 	color: #fff;
+	text-align: center;
+  font-family: "HelveticaNeue-Light", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
 * {
@@ -100,10 +102,6 @@ body {
 a,
 a:visited {
   color: inherit;
-}
-
-body {
-  font-family: "HelveticaNeue-Light", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
 code, pre {
@@ -255,7 +253,10 @@ p {
 }
 
 .update-timer {
-	background-color: #444;
+	background-image: -webkit-linear-gradient(right, #444 97%, black 97.001%, black 100%);
+	background-image: linear-gradient(to right, #444 97%, black 97.1%, black 100%);
+	background-size: 10%;
+	/* background-color: #444; */
 	margin-bottom: 2rem;
 }
 
@@ -277,18 +278,20 @@ p {
 
 form {
 	text-align: center;
+	display: inline-block;
 }
 
-button[type="submit"] {
+button {
 	-webkit-appearance: button;
 	border: 0;
-	margin: 0;
+	margin: 0 1rem 1rem 1rem;
 	padding: 1rem 3rem;
 	color: #666;
 	background-color: #222;
 	font-family: "HelveticaNeue-Medium", sans-serif;
 	text-transform: uppercase;
 	letter-spacing: .02em;
+	cursor: pointer;
 }
 
 .module__details--minmax {
@@ -307,4 +310,8 @@ button[type="submit"] {
 
 .module__details--minmax svg path {
 	fill: #29abe2;
+}
+
+#refresh {
+	min-width: 200px;
 }

@@ -36,6 +36,9 @@ if ( false === file_exists( 'config.php' ) ) {
 	require_once 'netatmo.php';
 }
 
+//mikrogramma_debug( $_SESSION );
+//mikrogramma_debug( $_GET );
+
 // If user chose to log out
 if ( isset( $_POST['logout'] ) ) {
 	logout_netatmo();
@@ -43,10 +46,11 @@ if ( isset( $_POST['logout'] ) ) {
 
 // If there is no authorization code from Netatmo, or if the session has not been started
 if ( ! isset( $_GET['code'] ) || ! isset( $_SESSION ) ) {
+//if ( ! isset( $_SESSION['state'] ) ) {
 	login_netatmo();
 }
 
-if ( isset( $_SESSION['state'] ) && ( $_SESSION['state'] === $_GET['state'] ) ) {
+if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state'] ) ) {
 
 	if ( ! isset( $_SESSION['access_token'] ) ) {
 		get_access_token();
@@ -56,13 +60,13 @@ if ( isset( $_SESSION['state'] ) && ( $_SESSION['state'] === $_GET['state'] ) ) 
 		refresh_token();
 	}
 
-	//mikrogramma_debug( $session );
-
 } else {
 	mikrogramma_debug( $_SESSION );
 	echo '<p>Istunnon tila ei täsmää. <a href="' . basename( $_SERVER['PHP_SELF'] ) . '">Kirjaudu uudelleen.</a></p>';
 	die();
 }
+
+//mikrogramma_debug( $_SESSION );
 
 ?>
 <!doctype html>
@@ -73,7 +77,7 @@ if ( isset( $_SESSION['state'] ) && ( $_SESSION['state'] === $_GET['state'] ) ) 
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<title>Ukkoherranlenkki 4 Netatmo</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="netatmo.css">
+	<link rel="stylesheet" href="netatmo.css?ver=<?php echo filemtime( 'netatmo.css' ); ?>">
 </head>
 
 <body>
@@ -95,6 +99,7 @@ if ( isset( $_SESSION['state'] ) && ( $_SESSION['state'] === $_GET['state'] ) ) 
 		 ?>
 	</div>
 
+	<button id="refresh">Päivitä</button>
 	<form action="<?php echo basename( $_SERVER['PHP_SELF'] ); ?>" method="post">
 		<input type="hidden" name="logout" value="true" />
 		<button type="submit">Kirjaudu ulos</button>
@@ -107,10 +112,9 @@ if ( isset( $_SESSION['state'] ) && ( $_SESSION['state'] === $_GET['state'] ) ) 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.threshold.min.js" integrity="sha256-RgFycE5E183kX3Qvb9ogyMWG1Q/BaN1StpWF2sChHJw=" crossorigin="anonymous"></script>
 	<script>
 		var netatmo = {
-			update_interval: <?php echo NETATMO_UPDATE_INTERVAL; ?>,
-			access_token: <?php echo "'" . $_SESSION['access_token'] . "'"; ?>
+			update_interval: <?php echo NETATMO_UPDATE_INTERVAL; ?>
 		};
 	</script>
-	<script src="netatmo.js"></script>
+	<script src="netatmo.js?ver=<?php echo filemtime( 'netatmo.js' ); ?>"></script>
 </body>
 </html>

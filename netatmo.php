@@ -20,7 +20,7 @@ define( 'MONTH_IN_SECONDS', 30 * DAY_IN_SECONDS );
 define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
 
 // Define automatic update interval
-DEFINE( 'NETATMO_UPDATE_INTERVAL', 2 * MINUTE_IN_SECONDS );
+DEFINE( 'NETATMO_UPDATE_INTERVAL', 11 * MINUTE_IN_SECONDS );
 
 /**
  * Print temperatures for all modules
@@ -65,7 +65,8 @@ function print_temperatures() {
 
 		// Print the info for each submodule
 		foreach ( $station->modules as $module_index => $module ) {
-			if ( $outdoor_module_index === $module_index ) {
+			// Skip other than indoor modules
+			if ( $module->type !== 'NAModule4' ) {
 				continue;
 			}
 			$output .= get_module_info( $module );
@@ -104,26 +105,27 @@ function get_module_info( $module ) {
 				<?php echo $module->module_name; ?>
 			</div>
 			<?php if( 'indoor' === $module_type ) :
-				$co2_level = $module->dashboard_data->CO2;
-				$co2_color = false;
-				if ( $co2_level > 1 ) {
-					$co2_color = 'green';
-				}
-				if ( $co2_level > 700 ) {
-					$co2_color = 'light-green';
-				}
-				if ( $co2_level > 1000 ) {
-					$co2_color = 'yellow';
-				}
-				if ( $co2_level > 1500 ) {
-					$co2_color = 'orange';
-				}
-				if ( $co2_level > 2000 ) {
-					$co2_color = 'red';
-				}
-
+				if ( isset( $module->dashboard_data->CO2 ) ) :
+					$co2_level = $module->dashboard_data->CO2;
+					$co2_color = false;
+					if ( $co2_level > 1 ) {
+						$co2_color = 'green';
+					}
+					if ( $co2_level > 700 ) {
+						$co2_color = 'light-green';
+					}
+					if ( $co2_level > 1000 ) {
+						$co2_color = 'yellow';
+					}
+					if ( $co2_level > 1500 ) {
+						$co2_color = 'orange';
+					}
+					if ( $co2_level > 2000 ) {
+						$co2_color = 'red';
+					}
 			?>
 			<div class="module__details--co2 co2-level-<?php echo $co2_color; ?>" title="<?php echo $co2_level; ?>"></div>
+			<?php endif; ?>
 			<div class="module__details--humidity"><?php echo $module->dashboard_data->Humidity; ?> %</div>
 			<?php endif; ?>
 			<div class="module__details--temp"><?php
@@ -147,7 +149,7 @@ function get_module_info( $module ) {
 
 	$output .= ob_get_clean();
 
-	$module_query = http_build_query(
+	$recent_history_query = http_build_query(
 		array(
 			'access_token' => $_SESSION['access_token'],
 			'device_id'    => $station_mac,
@@ -159,14 +161,12 @@ function get_module_info( $module ) {
 			'limit'        => 400,
 		)
 	);
-	$module_api_url = 'https://api.netatmo.com/api/getmeasure?' . $module_query;
 
+	$module_api_url = 'https://api.netatmo.com/api/getmeasure?' . $recent_history_query;
 	$module_history = file_get_contents( $module_api_url );
 	$module_history_json = json_decode( $module_history );
 
-	//mikrogramma_debug( $module_history_json );
-
-	$data_points = array();
+	$recent_data_points = array();
 
 	foreach ( $module_history_json->body as $data_point ) {
 
@@ -178,13 +178,62 @@ function get_module_info( $module ) {
 				$point_x = ( $data_point->beg_time + $data_point->step_time ) * 1000;
 				$point_y = $data_point->value[$index][0];
 			}
-			$data_points[] = [ $point_x, $point_y ];
+			$recent_data_points[] = [ $point_x, $point_y ];
+		}
+	}
+	/**
+	 * Add current time as last data point, to compensate possible data or
+	 * service outages.
+	 */
+	$recent_data_points[] = [ time() * 1000, null ];
+
+	/**
+	 * Perform a query for yesterday's outdoor temperatures.
+	 */
+	if( $module_type === 'outdoor' ) {
+		$further_history_query = http_build_query(
+			array(
+				'access_token' => $_SESSION['access_token'],
+				'device_id'    => $station_mac,
+				'module_id'    => $module->_id,
+				'scale'        => 'max',
+				'real_time'    => 'true',
+				'type'         => 'Temperature',
+				'date_begin'   => ( time() - 48 * 60 * 60 ),
+				'date_end'     => ( time() - 24 * 60 * 60 ),
+				'limit'        => 400,
+			)
+		);
+
+		$module_api_url = 'https://api.netatmo.com/api/getmeasure?' . $further_history_query;
+		$module_history = file_get_contents( $module_api_url );
+		$module_history_json = json_decode( $module_history );
+
+		$further_data_points = array();
+
+		foreach ( $module_history_json->body as $data_point ) {
+
+			foreach( $data_point->value as $index => $value ) {
+				if( $index === 0 ) {
+					$point_x = ( $data_point->beg_time + 24 * 60 * 60 ) * 1000;
+					$point_y = $data_point->value[0][0];
+				} else {
+					// Normalize x-axis points by adding 24 hours to timestamps
+					$point_x = ( $data_point->beg_time + $data_point->step_time + 24 * 60 * 60 ) * 1000;
+					$point_y = $data_point->value[$index][0];
+				}
+				$further_data_points[] = [ $point_x, $point_y ];
+			}
 		}
 	}
 
-	$output .= '<div class="flot-chart" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $data_points ) . '" data-module-type="' . $module_type . '"></div>';
+	$output .= '<div class="flot-chart" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $recent_data_points ) . '" data-module-type="' . $module_type . '"';
 
-	$output .= '</div>';
+	if( $module_type === 'outdoor' ) {
+		$output .= ' data-further-points="' . json_encode( $further_data_points ) . '"';
+	}
+
+	$output .= '></div></div>';
 
 	return $output;
 }
@@ -232,6 +281,7 @@ function get_access_token() {
 		$_SESSION[ $key ] = $params[ $key ];
 	}
 
+	$_SESSION['code'] = $code;
 	$_SESSION['token_expires'] = time() + $params['expires_in'];
 }
 
@@ -308,6 +358,8 @@ function login_netatmo() {
 
 function logout_netatmo() {
 	session_unset();
+	session_destroy();
+	mikrogramma_debug( $_SESSION );
 	echo 'Sinut on kirjattu ulos. <a href="' . basename( $_SERVER['PHP_SELF'] ) . '">Kirjaudu uudelleen.</a>';
 	die();
 }
