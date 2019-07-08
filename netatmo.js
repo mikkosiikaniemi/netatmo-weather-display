@@ -132,7 +132,7 @@
 			width: '100%',
 		}, updateInterval * 1000, 'linear' );
 
-		var data_points, n;
+		var data_points, rain_data_points, n;
 
 		// Put all indoor temperatures to an array
 		var indoor_temps = [];
@@ -146,8 +146,9 @@
 			}
 		}
 
-		// Put all outdoor temperatures to an array
+		// Put all outdoor temperatures and rain measures to individual arrays
 		var outdoor_temps = [];
+		var rain_measures = [];
 		var outdoor_modules = document.querySelectorAll('div[data-module-type="outdoor"]');
 		if (outdoor_modules.length >= 1) {
 			for (var m = 0; m < outdoor_modules.length; m++) {
@@ -159,19 +160,43 @@
 				for (n = 0; n < data_points.length; n++) {
 					outdoor_temps.push(data_points[n][1]);
 				}
+				rain_data_points = JSON.parse(outdoor_modules[m].getAttribute('data-rain-points'));
+				for (n = 0; n < rain_data_points.length; n++) {
+					rain_measures.push(rain_data_points[n][1]);
+				}
 			}
 		}
 
 		// Find the highest/lowest temperatures and set them as Y-axis options
-		var outdoor_options = {
-			low: array_min(outdoor_temps) - 0.5,
-			high: array_max(outdoor_temps) + 0.5,
-		};
+		var outdoor_temp_diff = array_max(outdoor_temps) - array_min(outdoor_temps);
+		var outdoor_normalization = 15; // Normalize to this diff, i.e. the difference between chart min/max
+		var outdoor_options = {};
 
-		var indoor_options = {
-			low: array_min(indoor_temps) - 0.5,
-			high: array_max(indoor_temps) + 0.5,
-		};
+		if ( outdoor_temp_diff > ( outdoor_normalization - 2) ) {
+			outdoor_options = {
+				low: array_min(outdoor_temps) - 1,
+				high: array_max(outdoor_temps) + 1,
+			};
+		} else {
+			outdoor_options = {
+				low: array_min(outdoor_temps) - ( outdoor_normalization - outdoor_temp_diff )/2,
+				high: array_max(outdoor_temps) + ( outdoor_normalization - outdoor_temp_diff )/2,
+			};
+		}
+
+		console.log( array_min(outdoor_temps), array_max(outdoor_temps), outdoor_temp_diff, outdoor_options );
+
+		var indoor_options = {};
+		var indoor_min = array_min(indoor_temps);
+		var indoor_max = array_max(indoor_temps);
+
+		if ( indoor_max - indoor_min < 4 ) {
+			indoor_options.low = indoor_min - 1;
+			indoor_options.high = indoor_max + 1;
+		} else {
+			indoor_options.low = indoor_min - 0.5;
+			indoor_options.high = indoor_max + 0.5;
+		}
 
 		var line_color, xaxis_options, yaxis_options, font_spec, data_series;
 
@@ -181,15 +206,16 @@
 
 		$('.flot-chart').each(function (index, element) {
 			var element_id = '#' + $(element).attr('id');
-			var element_data = $(element).data('points');
-			var element_data2 = $(element).data('further-points');
+			var temperature_data_recent = $(element).data('points');
+			var temperature_data_further = $(element).data('further-points');
+			var rain_data = $(element).data('rain-points');
 			var element_type = $(element).data('module-type');
 
 			font_spec = {
 				size: 11,
 				lineHeight: 13,
 				family: "HelveticaNeue",
-				color: "#aaaaaa"
+				color: "#888888"
 			};
 
 			xaxis_options = {
@@ -202,7 +228,6 @@
 			};
 
 			yaxis_options = {
-				position: 'right',
 				font: font_spec,
 				tickDecimals: 0,
 				showTicks: true,
@@ -216,8 +241,7 @@
 				//yaxis_options.tickSize = 1;
 				yaxis_options.minTickSize = 2;
 				xaxis_options.ticks = 12;
-				data_series = [ element_data, element_data2 ];
-				//data_series = element_data2;
+				data_series = [ temperature_data_recent, temperature_data_further ];
 			}
 			if (element_type === 'indoor') {
 				yaxis_options.min = indoor_options.low;
@@ -225,32 +249,27 @@
 				line_color = '#29abe2';
 				yaxis_options.tickSize = null;
 				xaxis_options.ticks = 6;
-				data_series = element_data;
+				data_series = temperature_data_recent;
+				/*
 				if(index > 1) {
 					yaxis_options.show = false;
 				}
+				*/
 			}
 
 			if( element_type === 'outdoor' ) {
 				$.plot(element_id, [
 					{
-						data: element_data2,
+						data: temperature_data_further,
 						color: 'rgba(41,171,226,0.2)',
-						/*
-						threshold: {
-							below: 0,
-							color: "rgb(200, 20, 30, 0.2)"
-						},
-						*/
 						shadowSize: 0,
 						lines: {
 							show: true,
 							fill: false,
-							//fillColor: { colors: [{ opacity: 0.2 }, { opacity: 0.5 }] }
 						}
 					},
 					{
-						data: element_data,
+						data: temperature_data_recent,
 						color: line_color,
 						threshold: {
 							below: 0,
@@ -262,16 +281,40 @@
 							fill: true,
 							fillColor: { colors: [{ opacity: 0.2 }, { opacity: 0.5 }] }
 						}
+					},
+					{
+						data: rain_data,
+						color: 'rgba(24,24,24,0.9)',
+						yaxis: 2,
+						bars: {
+							show: true,
+							fill: true,
+							barWidth: 20 * 60 * 1000,
+							lineWidth: 1,
+							shadowSize: 0,
+							borderWidth: 1,
+							align: 'center',
+							fillColor: 'rgba(41,171,226,0.7)',
+						}
 					}
 				],
 				{
 					xaxis: xaxis_options,
-					yaxis: yaxis_options,
+					yaxes: [
+						yaxis_options, // options for the first y-axis
+						{              // options for the second y-axis
+							min: 0,
+							max: array_max( rain_measures ) * 4,
+							tickDecimals: 1,
+							font: font_spec,
+							position: 'right'
+						}
+					],
 					grid: {
 						borderWidth: 0,
 						color: 'rgba(41,171,226,0.7)',
-						backgroundColor: '#101010',
-						markings: [ { xaxis: { from: startOfDay, to: startOfDay }, color: "rgba(41,171,226,.2" } ]
+						backgroundColor: 'rgba(240,240,240,0.1)',
+						//markings: [ { xaxis: { from: startOfDay, to: startOfDay }, color: "rgba(41,171,226,.2" } ]
 					},
 				});
 			}
@@ -297,8 +340,8 @@
 					grid: {
 						borderWidth: 0,
 						color: 'rgba(41,171,226,0.7)',
-						backgroundColor: '#101010',
-						markings: [ { xaxis: { from: startOfDay, to: startOfDay }, color: "rgba(41,171,226,.2" } ]
+						backgroundColor: 'rgba(240,240,240,0.1)',
+						//markings: [ { xaxis: { from: startOfDay, to: startOfDay }, color: "rgba(41,171,226,.2" } ]
 					},
 				});
 			}
@@ -319,6 +362,12 @@
 		setInterval(updateClock, 1000);
 		//setInterval(updateTemperatures, netatmo.update_interval * 1000);
 		setInterval(updateTimeDifferences, 30000);
+
+		// Reload the whole page at interval
+		setTimeout( function() {
+			location.reload();
+		}, 60 * 60 * 1000 );
+
 
 	});
 

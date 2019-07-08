@@ -45,6 +45,7 @@ if ( false === file_exists( 'config.php' ) ) {
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<link rel="apple-touch-icon" href="apple-touch-icon.png">
+	<link rel="icon" href="apple-touch-icon.png">
 	<style>
 		html, body {
 			height: 100%;

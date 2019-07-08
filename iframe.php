@@ -13,6 +13,7 @@ session_start();
 
 // Set the correct timezone in order to print correctly formatted time
 date_default_timezone_set('Europe/Helsinki');
+setlocale(LC_TIME, "fi");
 
 /**
  * Check if the obligatory configuration file exists.
@@ -61,12 +62,14 @@ if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state']
 	}
 
 } else {
-	mikrogramma_debug( $_SESSION );
 	echo '<p>Istunnon tila ei täsmää. <a href="' . basename( $_SERVER['PHP_SELF'] ) . '">Kirjaudu uudelleen.</a></p>';
+	?>
+	<script>
+	setTimeout( "location.href = '<?php echo basename( $_SERVER['PHP_SELF'] ); ?>';",3000);
+	</script>
+	<?php
 	die();
 }
-
-//mikrogramma_debug( $_SESSION );
 
 ?>
 <!doctype html>
@@ -76,13 +79,14 @@ if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state']
 	<meta charset="utf-8">
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<title>Ukkoherranlenkki 4 Netatmo</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 	<link rel="stylesheet" href="netatmo.css?ver=<?php echo filemtime( 'netatmo.css' ); ?>">
 </head>
 
-<body>
+<body class="dark-mode">
 
-	<p class="date-and-time">Haetaan päiväystä...</p>
+	<p id="date-and-time" class="date-and-time">Haetaan päiväystä...</p>
 
 	<div class="update-timer">
 		<div class="update-timer__bar"></div>
@@ -99,11 +103,17 @@ if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state']
 		 ?>
 	</div>
 
-	<button id="refresh">Päivitä</button>
-	<form action="<?php echo basename( $_SERVER['PHP_SELF'] ); ?>" method="post">
-		<input type="hidden" name="logout" value="true" />
-		<button type="submit">Kirjaudu ulos</button>
-	</form>
+	<div id="forecast" class="padded">
+		<?php print_forecast(); ?>
+	</div>
+
+	<div id="actions" class="padded">
+		<button id="refresh">Päivitä</button>
+		<form action="<?php echo basename( $_SERVER['PHP_SELF'] ); ?>" method="post">
+			<input type="hidden" name="logout" value="true" />
+			<button type="submit">Kirjaudu ulos</button>
+		</form>
+	</div>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js" integrity="sha256-YcbK69I5IXQftf/mYD8WY0/KmEDCv1asggHpJk1trM8=" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js" integrity="sha256-LMe2LItsvOs1WDRhgNXulB8wFpq885Pib0bnrjETvfI=" crossorigin="anonymous"></script>
