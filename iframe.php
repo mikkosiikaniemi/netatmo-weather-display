@@ -92,19 +92,8 @@ if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state']
 		<div class="update-timer__bar"></div>
 	</div>
 
-	<div id="temperatures">
-		<?php
-			try {
-				echo print_temperatures();
-			}
-			catch ( Exception $e ) {
-				echo $e->getMessage();
-			}
-		 ?>
-	</div>
-
-	<div id="forecast" class="padded">
-		<?php print_forecast(); ?>
+	<div id="temperatures-and-forecast">
+		<?php	echo print_temperatures(); ?>
 	</div>
 
 	<div id="actions" class="padded">

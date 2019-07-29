@@ -25,12 +25,12 @@
 
 		var currentDateString = currentWeekDay + ' ' + currentDay + '.' + currentMonth + '.' + currentYear;
 		var currentTimeString = currentHours + ":" + currentMinutes + ":" + currentSeconds;
-		document.getElementsByClassName('date-and-time')[0].innerHTML = '<span class="date">' + currentDateString + '</span><span class="time">' + currentTimeString + '</span>';
+		document.getElementsByClassName('date-and-time')[0].innerHTML = '<a href="#date-and-time" class="date">' + currentDateString + '</a><span class="time">' + currentTimeString + '</span>';
 	}
 
 	function updateTemperatures() {
 		updateInProgress = true;
-		var placeholder = document.getElementById('temperatures');
+		var placeholder = document.getElementById('temperatures-and-forecast');
 		var updateButton = document.getElementById('refresh');
 
 		updateButton.innerHTML = 'Päivitetään... <span id="updateTimer">0</span>';
@@ -53,6 +53,7 @@
 				console.log('Temperatures updated.');
 			}
 			else {
+				placeholder.innerHTML = 'bb' + request.status + request.response;
 				console.log('server error');
 			}
 			updateInProgress = false;
@@ -61,6 +62,7 @@
 		};
 
 		request.onerror = function () {
+			placeholder.innerHTML = 'cc' + request.status + request.response;
 			console.log('something went wrong');
 		};
 
@@ -307,7 +309,9 @@
 							max: array_max( rain_measures ) * 4,
 							tickDecimals: 1,
 							font: font_spec,
-							position: 'right'
+							position: 'right',
+							tickColor: 'rgba(240,240,240,0.2)',
+							alignTicksWithAxis: 1
 						}
 					],
 					grid: {
@@ -366,7 +370,7 @@
 		// Reload the whole page at interval
 		setTimeout( function() {
 			location.reload();
-		}, 60 * 60 * 1000 );
+		}, 3 * 60 * 60 * 1000 );
 
 
 	});

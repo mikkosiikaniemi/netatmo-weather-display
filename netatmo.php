@@ -20,7 +20,7 @@ define( 'MONTH_IN_SECONDS', 30 * DAY_IN_SECONDS );
 define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
 
 // Define automatic update interval
-DEFINE( 'NETATMO_UPDATE_INTERVAL', 11 * MINUTE_IN_SECONDS - 45 );
+DEFINE( 'NETATMO_UPDATE_INTERVAL', 11 * MINUTE_IN_SECONDS );
 
 /**
  * Print temperatures for all modules
@@ -58,6 +58,7 @@ function print_temperatures() {
 		// Find the rain gauge module and its index amongst connected modules
 		$rain_gauge_index = array_search( 'NAModule3', array_column( $station->modules, 'type' ) );
 
+		$output .= 	'<div id="temperatures">';
 		$output .= '<div class="modules">';
 
 		// Print the outdoor module info together with rain measures
@@ -76,9 +77,12 @@ function print_temperatures() {
 		}
 
 		$output .= '</div>';
+		$output .= '</div>';
 
 		//$output .= '<p class="data-time">Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
 		//$output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['token_expires'] ) . '.</p>';
+
+		$output .= print_forecast();
 
 		return $output;
 	} else {
@@ -152,6 +156,8 @@ function get_module_info( $module, $rain_module = false ) {
 			</div>
 			<?php if ( 'outdoor' === $module_type ) : ?>
 			<div class="module__details--minmax">
+				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"  stroke-linecap="round" stroke-linejoin="round" class="icon-stroked feather feather-droplet"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+				<?php echo $module->dashboard_data->Humidity; ?> %
 				<svg xmlns="http://www.w3.org/2000/svg" width="65.6" height="95" viewBox="0 0 65.6 95" class="icon-filled"><path d="M64.5 42.8l-7.9-7.9-18.2 18.3V0H27.2v53.2L9 34.9l-7.9 7.9 31.7 31.7zM0 83.9h65.6V95H0z"/></svg>
 				<?php echo number_format( $module->dashboard_data->min_temp, 1 ); ?>°
 				<!-- <small>&mdash;</small>
@@ -462,6 +468,8 @@ function human_time_difference( $timestamp ) {
  * Get weather forecast info from Ilmatieteenlaitos.
  */
 function print_forecast() {
+	$output = '';
+
 	$start_time = date( 'Y-m-d\TH:i:s', time() - date( 'Z' ) ) . '.000Z';
 	$end_time   = date( 'Y-m-d\TH:i:s', time() - date( 'Z' ) + 66 * 60 * 60 ) . '.000Z';
 
@@ -524,9 +532,12 @@ function print_forecast() {
 	$forecast_data_points = 20;
 	$todays_forecast_printed = false;
 
-	$next_days_forecast_points = array( '09', '12', '15', '18', '21' );
+	//$next_days_forecast_points = array( '09', '11', '13', '15', '17', '19', '21' );
+	$next_days_forecast_points = array( '08', '10', '12', '14', '16', '18', '20', '22' );
 
-	foreach ( $forecast as $data_point ) {
+	$output .= '<div id="forecast" class="padded">';
+
+	foreach ( $forecast as $index => $data_point ) {
 
 		// Print only defined amount of data points at maximum
 		if ( $forecast_data_points <= 0 ) {
@@ -547,36 +558,43 @@ function print_forecast() {
 			continue;
 		}
 
-		echo '<div class="forecast__data-point';
+		$output .= '<div class="forecast__data-point';
 		if( $every_other_weekday ) {
-			echo ' colored-bg';
+			$output .= ' colored-bg';
 		}
 
-		echo '" data-time="' . $data_point['time'] . '">';
+		$output .= '" data-time="' . $data_point['time'] . '">';
+
+		if ( 0 === $index ) {
+			$output .= '<span class="forecast__data-point--weekday">' . $weekday_names[ date( 'D', $data_point['time'] ) ] . '</span><br/>';
+		}
+
 		if ( $next_days_forecast_points[0] === date( 'H', $data_point['time'] ) ) {
-			echo '<span class="forecast__data-point--weekday">' . $weekday_names[ date( 'D', $data_point['time'] ) ] . '</span><br/>';
+			$output .= '<span class="forecast__data-point--weekday">' . $weekday_names[ date( 'D', $data_point['time'] ) ] . '</span><br/>';
 			$day_counter++;
 		}
 
-		echo '<span class="forecast__data-point--hour">' . date( 'H', $data_point['time'] ) . '</span><br/>';
+		$output .= '<span class="forecast__data-point--hour">' . date( 'H', $data_point['time'] ) . '</span><br/>';
 
 		$sunrise = date_sunrise( time() + $day_counter * DAY_IN_SECONDS , SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90 );
 		$sunset  = date_sunset( + $day_counter * DAY_IN_SECONDS, SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90 );
 
-		echo '<img class="weather-symbol symbol-' . $data_point['symbol'] . '" src="https://cdn.fmi.fi/symbol-images/smartsymbol/v3/p/';
+		$output .= '<img class="weather-symbol symbol-' . $data_point['symbol'] . '" src="https://cdn.fmi.fi/symbol-images/smartsymbol/v3/p/';
 
 		if ( $data_point['time'] > $sunset && $data_point['time'] < $sunrise ) {
-			echo $fmi_weather_symbols[ (int) $data_point['symbol'] ] + 100 . '.svg">';
+			$output .= $fmi_weather_symbols[ (int) $data_point['symbol'] ] + 100 . '.svg">';
 		} else {
-			echo $fmi_weather_symbols[ (int) $data_point['symbol'] ] . '.svg">';
+			$output .= $fmi_weather_symbols[ (int) $data_point['symbol'] ] . '.svg">';
 		}
 
-		echo '<br/>';
-		echo '<span class="forecast__data-point--temp">' . round( $data_point['temp'] ) . '</span><span class="forecast__data-point--celcius">°</span>';
-		echo '</div>';
+		$output .= '<br/>';
+		$output .= '<span class="forecast__data-point--temp">' . round( $data_point['temp'] ) . '</span><span class="forecast__data-point--celcius">°</span>';
+		$output .= '</div>';
 
 		$forecast_data_points--;
 	}
+	$output .= '</div>';
+	return $output;
 }
 
 function object_to_array( $object ) {

@@ -105,7 +105,8 @@ body.dark-mode {
 
 a,
 a:visited {
-  color: inherit;
+	color: inherit;
+	text-decoration: none;
 }
 
 code, pre {
@@ -243,9 +244,8 @@ p {
 
 .module__details--humidity {
 	display: inline-block;
-	opacity: .5;
+	opacity: .7;
 }
-
 
 .co2-level-green {
 	color: #1faf4e;
@@ -330,7 +330,7 @@ button {
 	vertical-align: baseline;
 	height: 1em;
 	width: 1em;
-	margin: 0 .5em -0.1em 1em;
+	margin: 0 .25em -0.15em 1em;
 }
 
 
@@ -379,8 +379,8 @@ button {
 }
 
 .forecast__data-point--hour {
-	opacity: .5;
-	font-size: 80%;
+	opacity: .7;
+	font-size: 90%;
 }
 
 /*
