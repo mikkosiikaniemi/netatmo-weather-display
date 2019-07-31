@@ -134,34 +134,13 @@
 			width: '100%',
 		}, updateInterval * 1000, 'linear' );
 
-		var data_points, rain_data_points, n;
+		var rain_data_points, n;
 
-		// Put all indoor temperatures to an array
-		var indoor_temps = [];
-		var indoor_modules = document.querySelectorAll('div[data-module-type="indoor"]');
-		if (indoor_modules.length >= 1) {
-			for (var k = 0; k < indoor_modules.length; k++) {
-				data_points = JSON.parse(indoor_modules[k].getAttribute('data-points'));
-				for (var l = 0; l < data_points.length; l++) {
-					indoor_temps.push(data_points[l][1]);
-				}
-			}
-		}
-
-		// Put all outdoor temperatures and rain measures to individual arrays
-		var outdoor_temps = [];
+		// Put all rain measures to individual array
 		var rain_measures = [];
 		var outdoor_modules = document.querySelectorAll('div[data-module-type="outdoor"]');
 		if (outdoor_modules.length >= 1) {
 			for (var m = 0; m < outdoor_modules.length; m++) {
-				data_points = JSON.parse(outdoor_modules[m].getAttribute('data-points'));
-				for (n = 0; n < data_points.length; n++) {
-					outdoor_temps.push(data_points[n][1]);
-				}
-				data_points = JSON.parse(outdoor_modules[m].getAttribute('data-further-points'));
-				for (n = 0; n < data_points.length; n++) {
-					outdoor_temps.push(data_points[n][1]);
-				}
 				rain_data_points = JSON.parse(outdoor_modules[m].getAttribute('data-rain-points'));
 				for (n = 0; n < rain_data_points.length; n++) {
 					rain_measures.push(rain_data_points[n][1]);
@@ -169,35 +148,32 @@
 			}
 		}
 
-		// Find the highest/lowest temperatures and set them as Y-axis options
-		var outdoor_temp_diff = array_max(outdoor_temps) - array_min(outdoor_temps);
-		var outdoor_normalization = 15; // Normalize to this diff, i.e. the difference between chart min/max
 		var outdoor_options = {};
 
-		if ( outdoor_temp_diff > ( outdoor_normalization - 2) ) {
-			outdoor_options = {
-				low: array_min(outdoor_temps) - 1,
-				high: array_max(outdoor_temps) + 1,
-			};
-		} else {
-			outdoor_options = {
-				low: array_min(outdoor_temps) - ( outdoor_normalization - outdoor_temp_diff )/2,
-				high: array_max(outdoor_temps) + ( outdoor_normalization - outdoor_temp_diff )/2,
-			};
+		var indoor_modules = document.querySelectorAll('div[data-module-type="indoor"]');
+		var indoor_min_temp = null;
+		var indoor_max_temp = null;
+
+		if (indoor_modules.length >= 1) {
+			indoor_min_temp = parseFloat( indoor_modules[0].getAttribute('data-min-temp') );
+			indoor_max_temp = parseFloat( indoor_modules[0].getAttribute('data-max-temp') );
+
+			for (var o = 0; o < indoor_modules.length; o++) {
+				if( parseFloat( indoor_modules[o].getAttribute('data-min-temp') ) < indoor_min_temp ) {
+					indoor_min_temp = parseFloat( indoor_modules[o].getAttribute('data-min-temp') );
+				}
+				if( parseFloat( indoor_modules[o].getAttribute('data-max-temp') ) > indoor_max_temp ) {
+					indoor_max_temp = parseFloat( indoor_modules[o].getAttribute('data-max-temp') );
+				}
+			}
 		}
 
-		console.log( array_min(outdoor_temps), array_max(outdoor_temps), outdoor_temp_diff, outdoor_options );
-
-		var indoor_options = {};
-		var indoor_min = array_min(indoor_temps);
-		var indoor_max = array_max(indoor_temps);
-
-		if ( indoor_max - indoor_min < 4 ) {
-			indoor_options.low = indoor_min - 1;
-			indoor_options.high = indoor_max + 1;
+		if ( indoor_max_temp - indoor_min_temp < 4 ) {
+			indoor_min_temp = indoor_min_temp - 1;
+			indoor_max_temp = indoor_max_temp + 1;
 		} else {
-			indoor_options.low = indoor_min - 0.5;
-			indoor_options.high = indoor_max + 0.5;
+			indoor_min_temp = indoor_min_temp - 0.5;
+			indoor_max_temp = indoor_max_temp + 0.5;
 		}
 
 		var line_color, xaxis_options, yaxis_options, font_spec, data_series;
@@ -212,6 +188,25 @@
 			var temperature_data_further = $(element).data('further-points');
 			var rain_data = $(element).data('rain-points');
 			var element_type = $(element).data('module-type');
+
+			var min_temp = $(element).data('min-temp');
+			var max_temp = $(element).data('max-temp');
+
+			if (element_type === 'outdoor') {
+				var outdoor_temp_diff = max_temp - min_temp;
+				var outdoor_normalization = 15; // Normalize to this diff, i.e. the difference between chart min/max
+				if ( outdoor_temp_diff > ( outdoor_normalization - 2) ) {
+					outdoor_options = {
+						low: min_temp - 1,
+						high: max_temp + 1,
+					};
+				} else {
+					outdoor_options = {
+						low: min_temp - ( outdoor_normalization - outdoor_temp_diff )/2,
+						high: max_temp + ( outdoor_normalization - outdoor_temp_diff )/2,
+					};
+				}
+			}
 
 			font_spec = {
 				size: 11,
@@ -246,17 +241,11 @@
 				data_series = [ temperature_data_recent, temperature_data_further ];
 			}
 			if (element_type === 'indoor') {
-				yaxis_options.min = indoor_options.low;
-				yaxis_options.max = indoor_options.high;
+				yaxis_options.min = indoor_min_temp;
+				yaxis_options.max = indoor_max_temp;
 				line_color = '#29abe2';
 				yaxis_options.tickSize = null;
 				xaxis_options.ticks = 6;
-				data_series = temperature_data_recent;
-				/*
-				if(index > 1) {
-					yaxis_options.show = false;
-				}
-				*/
 			}
 
 			if( element_type === 'outdoor' ) {
@@ -324,20 +313,31 @@
 			}
 
 			if( element_type === 'indoor' ) {
-				$.plot(element_id, [{
-					data: data_series,
-					color: line_color,
-					threshold: {
-						below: 0,
-						color: "rgb(200, 20, 30)"
+				$.plot(element_id, [
+					{
+						data: temperature_data_further,
+						color: 'rgba(41,171,226,0.2)',
+						shadowSize: 0,
+						lines: {
+							show: true,
+							fill: false,
+						}
 					},
-					shadowSize: 0,
-					lines: {
-						show: true,
-						fill: true,
-						fillColor: { colors: [{ opacity: 0.2 }, { opacity: 0.5 }] }
-					}
-				}],
+					{
+						data: temperature_data_recent,
+						color: line_color,
+						threshold: {
+							below: 0,
+							color: "rgb(200, 20, 30)"
+						},
+						shadowSize: 0,
+						lines: {
+							show: true,
+							fill: true,
+							fillColor: { colors: [{ opacity: 0.2 }, { opacity: 0.5 }] }
+						}
+					},
+				],
 				{
 					xaxis: xaxis_options,
 					yaxis: yaxis_options,

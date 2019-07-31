@@ -183,8 +183,8 @@ function get_module_info( $module, $rain_module = false ) {
 			'scale'        => 'max',
 			'real_time'    => 'true',
 			'type'         => 'Temperature',
-			'date_begin'   => ( time() - 24 * 60 * 60 ),
-			'limit'        => 400,
+			'date_begin'   => ( time() - ( 2 * DAY_IN_SECONDS ) ),
+			//'limit'        => 1000,
 		)
 	);
 
@@ -192,21 +192,38 @@ function get_module_info( $module, $rain_module = false ) {
 	$module_history      = file_get_contents( $module_api_url );
 	$module_history_json = json_decode( $module_history );
 
-	$recent_data_points = array();
+	$recent_data_points  = array();
+	$further_data_points = array();
+	$time_24hrs_ago = time() - DAY_IN_SECONDS;
+	$min_temp = $max_temp = $module_history_json->body[0]->value[0][0];
 
 	foreach ( $module_history_json->body as $data_point ) {
 
 		foreach ( $data_point->value as $index => $value ) {
 			if ( $index === 0 ) {
-				$point_x = $data_point->beg_time * 1000;
+				$point_x = $data_point->beg_time;
 				$point_y = $data_point->value[0][0];
 			} else {
-				$point_x = ( $data_point->beg_time + $data_point->step_time ) * 1000;
+				$point_x = $data_point->beg_time + $data_point->step_time;
 				$point_y = $data_point->value[ $index ][0];
 			}
-			$recent_data_points[] = [ $point_x, $point_y ];
+
+			if( $point_x < $time_24hrs_ago ) {
+				$further_data_points[] = [ ( $point_x + DAY_IN_SECONDS ) * 1000, $point_y ];
+			}
+			else {
+				$recent_data_points[] = [ $point_x * 1000, $point_y ];
+			}
+
+			if( $point_y > $max_temp ) {
+				$max_temp = $point_y;
+			}
+			if( $point_y < $min_temp ) {
+				$min_temp = $point_y;
+			}
 		}
 	}
+
 	/**
 	 * Add current time as last data point, to compensate possible data or
 	 * service outages.
@@ -214,47 +231,10 @@ function get_module_info( $module, $rain_module = false ) {
 	$recent_data_points[] = [ time() * 1000, null ];
 
 	/**
-	 * Perform a query for yesterday's outdoor temperatures.
+	 * Perform query for rain gauge measures.
 	 */
 	if ( $module_type === 'outdoor' ) {
-		$further_history_query = http_build_query(
-			array(
-				'access_token' => $_SESSION['access_token'],
-				'device_id'    => $station_mac,
-				'module_id'    => $module->_id,
-				'scale'        => 'max',
-				'real_time'    => 'true',
-				'type'         => 'Temperature',
-				'date_begin'   => ( time() - 48 * 60 * 60 ),
-				'date_end'     => ( time() - 24 * 60 * 60 ),
-				'limit'        => 400,
-			)
-		);
 
-		$module_api_url      = 'https://api.netatmo.com/api/getmeasure?' . $further_history_query;
-		$module_history      = file_get_contents( $module_api_url );
-		$module_history_json = json_decode( $module_history );
-
-		$further_data_points = array();
-
-		foreach ( $module_history_json->body as $data_point ) {
-
-			foreach ( $data_point->value as $index => $value ) {
-				if ( $index === 0 ) {
-					$point_x = ( $data_point->beg_time + 24 * 60 * 60 ) * 1000;
-					$point_y = $data_point->value[0][0];
-				} else {
-					// Normalize x-axis points by adding 24 hours to timestamps
-					$point_x = ( $data_point->beg_time + $data_point->step_time + 24 * 60 * 60 ) * 1000;
-					$point_y = $data_point->value[ $index ][0];
-				}
-				$further_data_points[] = [ $point_x, $point_y ];
-			}
-		}
-
-		/**
-		 * Perform query for rain gauge measures.
-			*/
 		if ( $rain_module ) {
 			$rain_query = http_build_query(
 				array(
@@ -265,7 +245,7 @@ function get_module_info( $module, $rain_module = false ) {
 					'real_time'    => 'true',
 					'type'         => 'sum_rain',
 					// 'date_begin'   => strtotime('today') - 10 * 60 * 60,
-					'date_begin'   => ( time() - 24 * 60 * 60 ),
+					'date_begin'   => ( time() - 24 * HOUR_IN_SECONDS ),
 					'limit'        => 100,
 				)
 			);
@@ -291,11 +271,11 @@ function get_module_info( $module, $rain_module = false ) {
 		}
 	}
 
-	$output .= '<div class="flot-chart" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $recent_data_points ) . '" data-module-type="' . $module_type . '"';
+	$output .= '<div class="flot-chart" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $recent_data_points ) . '" data-module-type="' . $module_type . '" data-min-temp="' . $min_temp . '" data-max-temp="' . $max_temp . '"';
+
+	$output .= ' data-further-points="' . json_encode( $further_data_points ) . '"';
 
 	if ( $module_type === 'outdoor' ) {
-		$output .= ' data-further-points="' . json_encode( $further_data_points ) . '"';
-
 		if ( ! empty( $rain_data_points ) ) {
 			$output .= ' data-rain-points="' . json_encode( $rain_data_points ) . '"';
 		}
@@ -569,7 +549,7 @@ function print_forecast() {
 			$output .= '<span class="forecast__data-point--weekday">' . $weekday_names[ date( 'D', $data_point['time'] ) ] . '</span><br/>';
 		}
 
-		if ( $next_days_forecast_points[0] === date( 'H', $data_point['time'] ) ) {
+		if ( $next_days_forecast_points[0] === date( 'H', $data_point['time'] ) && 0 !== $index ) {
 			$output .= '<span class="forecast__data-point--weekday">' . $weekday_names[ date( 'D', $data_point['time'] ) ] . '</span><br/>';
 			$day_counter++;
 		}
