@@ -86,6 +86,8 @@ if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state']
 
 <body class="dark-mode">
 
+	<?php include_once 'svg-symbols.svg'; ?>
+
 	<p id="date-and-time" class="date-and-time">Haetaan päiväystä...</p>
 
 	<div class="update-timer">

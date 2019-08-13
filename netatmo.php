@@ -182,7 +182,7 @@ function get_module_info( $module, $rain_module = false ) {
 			'module_id'    => $module->_id,
 			'scale'        => 'max',
 			'real_time'    => 'true',
-			'type'         => 'Temperature',
+			'type'         => 'Temperature,Humidity',
 			'date_begin'   => ( time() - ( 2 * DAY_IN_SECONDS ) ),
 			//'limit'        => 1000,
 		)
@@ -191,6 +191,8 @@ function get_module_info( $module, $rain_module = false ) {
 	$module_api_url      = 'https://api.netatmo.com/api/getmeasure?' . $recent_history_query;
 	$module_history      = file_get_contents( $module_api_url );
 	$module_history_json = json_decode( $module_history );
+
+	mikrogramma_debug( $module_history_json );
 
 	$recent_data_points  = array();
 	$further_data_points = array();
@@ -559,13 +561,17 @@ function print_forecast() {
 		$sunrise = date_sunrise( time() + $day_counter * DAY_IN_SECONDS , SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90 );
 		$sunset  = date_sunset( + $day_counter * DAY_IN_SECONDS, SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90 );
 
-		$output .= '<img class="weather-symbol symbol-' . $data_point['symbol'] . '" src="https://cdn.fmi.fi/symbol-images/smartsymbol/v3/p/';
+		$output .= '<svg class="weather-symbol symbol-' . $data_point['symbol'] . '">';
+		$output .= '<use xlink:href="#';
 
 		if ( $data_point['time'] > $sunset && $data_point['time'] < $sunrise ) {
-			$output .= $fmi_weather_symbols[ (int) $data_point['symbol'] ] + 100 . '.svg">';
+			$output .= $fmi_weather_symbols[ (int) $data_point['symbol'] ] + 100;
 		} else {
-			$output .= $fmi_weather_symbols[ (int) $data_point['symbol'] ] . '.svg">';
+			$output .= $fmi_weather_symbols[ (int) $data_point['symbol'] ];
 		}
+
+		$output .= '" /></svg>';
+
 
 		$output .= '<br/>';
 		$output .= '<span class="forecast__data-point--temp">' . round( $data_point['temp'] ) . '</span><span class="forecast__data-point--celcius">°</span>';

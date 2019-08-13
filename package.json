@@ -1,0 +1,25 @@
+{
+  "name": "netatmo",
+  "version": "1.0.0",
+  "description": "A weather display web application for presenting temperature information gathered by locally installed Netatmo weather sensors.",
+  "main": "gulpfile.js",
+  "dependencies": {},
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-cheerio": "^0.6.3",
+    "gulp-rename": "^1.4.0",
+    "gulp-svgmin": "^2.2.0",
+    "gulp-svgstore": "^7.0.1",
+    "path": "^0.12.7"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@bitbucket.org/MikrogrammaDesign/netatmo.git"
+  },
+  "author": "Mikko Siikaniemi",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/MikrogrammaDesign/netatmo#readme"
+}
