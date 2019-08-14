@@ -192,10 +192,11 @@ function get_module_info( $module, $rain_module = false ) {
 	$module_history      = file_get_contents( $module_api_url );
 	$module_history_json = json_decode( $module_history );
 
-	mikrogramma_debug( $module_history_json );
+	//mikrogramma_debug( $module_history_json );
 
-	$recent_data_points  = array();
-	$further_data_points = array();
+	$recent_temperatures = array();
+	$further_temperatures = array();
+	$recent_humidity = array();
 	$time_24hrs_ago = time() - DAY_IN_SECONDS;
 	$min_temp = $max_temp = $module_history_json->body[0]->value[0][0];
 
@@ -203,25 +204,28 @@ function get_module_info( $module, $rain_module = false ) {
 
 		foreach ( $data_point->value as $index => $value ) {
 			if ( $index === 0 ) {
-				$point_x = $data_point->beg_time;
-				$point_y = $data_point->value[0][0];
+				$time = $data_point->beg_time;
+				$temp = $data_point->value[0][0];
+				$hmdy = $data_point->value[0][1];
 			} else {
-				$point_x = $data_point->beg_time + $data_point->step_time;
-				$point_y = $data_point->value[ $index ][0];
+				$time = $data_point->beg_time + $data_point->step_time;
+				$temp = $data_point->value[ $index ][0];
+				$hmdy = $data_point->value[ $index ][1];
 			}
 
-			if( $point_x < $time_24hrs_ago ) {
-				$further_data_points[] = [ ( $point_x + DAY_IN_SECONDS ) * 1000, $point_y ];
+			if( $time < $time_24hrs_ago ) {
+				$further_temperatures[] = [ ( $time + DAY_IN_SECONDS ) * 1000, $temp ];
 			}
 			else {
-				$recent_data_points[] = [ $point_x * 1000, $point_y ];
+				$recent_temperatures[] = [ $time * 1000, $temp ];
+				$recent_humidity[] = [ $time * 1000, $hmdy ];
 			}
 
-			if( $point_y > $max_temp ) {
-				$max_temp = $point_y;
+			if( $temp > $max_temp ) {
+				$max_temp = $temp;
 			}
-			if( $point_y < $min_temp ) {
-				$min_temp = $point_y;
+			if( $temp < $min_temp ) {
+				$min_temp = $temp;
 			}
 		}
 	}
@@ -230,7 +234,7 @@ function get_module_info( $module, $rain_module = false ) {
 	 * Add current time as last data point, to compensate possible data or
 	 * service outages.
 	 */
-	$recent_data_points[] = [ time() * 1000, null ];
+	$recent_temperatures[] = [ time() * 1000, null ];
 
 	/**
 	 * Perform query for rain gauge measures.
@@ -261,21 +265,23 @@ function get_module_info( $module, $rain_module = false ) {
 
 				foreach ( $data_point->value as $index => $value ) {
 					if ( $index === 0 ) {
-						$point_x = ( $data_point->beg_time ) * 1000;
-						$point_y = $data_point->value[0][0];
+						$time = ( $data_point->beg_time ) * 1000;
+						$temp = $data_point->value[0][0];
 					} else {
-						$point_x = ( $data_point->beg_time + $data_point->step_time * $index ) * 1000;
-						$point_y = $data_point->value[ $index ][0];
+						$time = ( $data_point->beg_time + $data_point->step_time * $index ) * 1000;
+						$temp = $data_point->value[ $index ][0];
 					}
-					$rain_data_points[] = [ $point_x, $point_y ];
+					$rain_data_points[] = [ $time, $temp ];
 				}
 			}
 		}
 	}
 
-	$output .= '<div class="flot-chart" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $recent_data_points ) . '" data-module-type="' . $module_type . '" data-min-temp="' . $min_temp . '" data-max-temp="' . $max_temp . '"';
+	$output .= '<div class="flot-chart" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $recent_temperatures ) . '" data-module-type="' . $module_type . '" data-min-temp="' . $min_temp . '" data-max-temp="' . $max_temp . '"';
 
-	$output .= ' data-further-points="' . json_encode( $further_data_points ) . '"';
+	$output .= ' data-further-points="' . json_encode( $further_temperatures ) . '"';
+
+	$output .= ' data-humidity="' . json_encode( $recent_humidity ) . '"';
 
 	if ( $module_type === 'outdoor' ) {
 		if ( ! empty( $rain_data_points ) ) {

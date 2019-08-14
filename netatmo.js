@@ -187,6 +187,7 @@
 			var temperature_data_recent = $(element).data('points');
 			var temperature_data_further = $(element).data('further-points');
 			var rain_data = $(element).data('rain-points');
+			var humidity = $(element).data('rain-points');
 			var element_type = $(element).data('module-type');
 
 			var min_temp = $(element).data('min-temp');
