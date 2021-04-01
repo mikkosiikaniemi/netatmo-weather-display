@@ -50,11 +50,11 @@
 			if (request.status === 200) {
 				placeholder.innerHTML = request.response;
 				drawCharts();
-				console.log('Temperatures updated.');
+				//console.log('Temperatures updated.');
 			}
 			else {
 				placeholder.innerHTML = 'bb' + request.status + request.response;
-				console.log('server error');
+				//console.log('server error');
 			}
 			updateInProgress = false;
 			clearInterval( tickUpdate );
@@ -63,7 +63,7 @@
 
 		request.onerror = function () {
 			placeholder.innerHTML = 'cc' + request.status + request.response;
-			console.log('something went wrong');
+			//console.log('something went wrong');
 		};
 
 		request.send();
@@ -74,7 +74,7 @@
 		for (var i = 0; i < time_difference_placeholders.length; i++) {
 			var time_measured = time_difference_placeholders[i].getAttribute('data-time-measured') * 1000;
 			if( i === 1 && updateInProgress === false && Math.floor( new Date() / 1000 ) - time_difference_placeholders[i].getAttribute('data-time-measured') > updateInterval ) {
-				console.log( 'Interval update triggered.');
+				//console.log( 'Interval update triggered.');
 				updateTemperatures();
 			}
 			time_difference_placeholders[i].innerHTML = timeSince( time_measured );
@@ -197,15 +197,24 @@
 				var outdoor_temp_diff = max_temp - min_temp;
 				var outdoor_normalization = 15; // Normalize to this diff, i.e. the difference between chart min/max
 				if ( outdoor_temp_diff > ( outdoor_normalization - 2) ) {
+					//console.log( 'Outdoor temperature graph normalized, option A.');
 					outdoor_options = {
 						low: min_temp - 1,
 						high: max_temp + 1,
 					};
 				} else {
+					//console.log( 'Outdoor temperature graph normalized, option B.');
 					outdoor_options = {
 						low: min_temp - ( outdoor_normalization - outdoor_temp_diff )/2,
 						high: max_temp + ( outdoor_normalization - outdoor_temp_diff )/2,
 					};
+				}
+				if ( min_temp >= 0) {
+					outdoor_options.low = 0;
+				}
+
+				if ( max_temp <= 0 ) {
+					outdoor_options.high = 0;
 				}
 			}
 
@@ -254,6 +263,10 @@
 					{
 						data: temperature_data_further,
 						color: 'rgba(41,171,226,0.2)',
+						threshold: {
+							below: 0,
+							color: "rgba(200, 20, 30, 0.3)"
+						},
 						shadowSize: 0,
 						lines: {
 							show: true,
@@ -360,7 +373,7 @@
 		drawCharts();
 
 		$('#refresh').click( function() {
-			console.log('Refresh called.');
+			//console.log('Refresh called.');
 			updateTemperatures();
 		});
 

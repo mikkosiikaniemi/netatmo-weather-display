@@ -88,10 +88,29 @@ if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state']
 
 	<?php include_once 'svg-symbols.svg'; ?>
 
-	<p id="date-and-time" class="date-and-time">Haetaan päiväystä...</p>
+	<p id="date-and-time" class="date-and-time padded">Haetaan päiväystä...</p>
 
 	<div class="update-timer">
 		<div class="update-timer__bar"></div>
+	</div>
+
+	<div class="sunrise-sunset">
+		<?php
+			$sunrise = date_sunrise( time(), SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90 );
+			$sunset  = date_sunset( time(), SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90 );
+			$sunrise_minutes = date( 'H', $sunrise ) * 60 + date( 'i', $sunrise );
+			$sunset_minutes = date( 'H', $sunset ) * 60 + date( 'i', $sunset );
+			$sunrise_percent = round( ( $sunrise_minutes / ( 24 * 60 ) ) * 100, 2 );
+			$sunset_percent = round( ( $sunset_minutes / ( 24 * 60 ) ) * 100, 2 );
+		?>
+		<div class="sunrise" style="left: <?php echo $sunrise_percent; ?>%;">
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"   stroke-linecap="round" stroke-linejoin="round" class="icon-stroked feather feather-sunrise"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="2" x2="12" y2="9"></line><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line><line x1="1" y1="18" x2="3" y2="18"></line><line x1="21" y1="18" x2="23" y2="18"></line><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line><line x1="23" y1="22" x2="1" y2="22"></line><polyline points="8 6 12 2 16 6"></polyline></svg>
+			<span class=""><?php echo date( 'H:i', $sunrise ); ?></span>
+		</div>
+		<div class="sunset" style="left: <?php echo $sunset_percent; ?>%;">
+				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" class="icon-stroked feather feather-sunset"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="9" x2="12" y2="2"></line><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line><line x1="1" y1="18" x2="3" y2="18"></line><line x1="21" y1="18" x2="23" y2="18"></line><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line><line x1="23" y1="22" x2="1" y2="22"></line><polyline points="16 5 12 9 8 5"></polyline></svg>
+				<span class=""><?php echo date( 'H:i', $sunset ); ?></span>
+		</div>
 	</div>
 
 	<div id="temperatures-and-forecast">

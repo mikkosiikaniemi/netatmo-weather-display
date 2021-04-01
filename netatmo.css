@@ -128,8 +128,6 @@ p {
 	text-align: justify;
 	font-weight: 100;
 	text-align: initial;
-	padding-top: 2.5rem;
-	padding-bottom: 2.5rem;
 	margin-bottom: 0;
 }
 
@@ -146,7 +144,8 @@ p {
 }
 
 .module {
-	padding: 2.5rem 2rem;
+	padding-left: 2rem;
+	padding-right: 2rem;
 	text-align: center;
 	min-width: 256px;
 	width: 33.333%;
@@ -184,7 +183,7 @@ p {
 
 .module__details--temp__decimal {
 	font-size: 40%;
-	opacity: .5;
+	opacity: .7;
 	margin-left: .7rem;
 }
 
@@ -196,6 +195,11 @@ p {
 	font-size: 1400%;
 	line-height: 1;
 	margin-top: -3%;
+}
+
+.module-outdoor .module__details--temp-verycold {
+	font-size: 1100%;
+	line-height: 1.3;
 }
 
 .module__details--time,
@@ -326,7 +330,7 @@ button {
 	line-height: 2;
 }
 
-.module__details--minmax svg {
+svg[class*="icon-"] {
 	vertical-align: baseline;
 	height: 1em;
 	width: 1em;
@@ -338,7 +342,7 @@ button {
 	fill: #29abe2;
 }
 
-.module__details--minmax .icon-stroked path {
+.icon-stroked > * {
 	stroke: #29abe2;
 	stroke-width: 3;
 	fill: none;
@@ -348,13 +352,61 @@ button {
 	min-width: 200px;
 }
 
-.weather-symbol {
-	width: 35px;
-	height: 35px;
+.sunrise-sunset {
+	position: relative;
+	margin-top: -3rem;
+	padding-bottom: 4rem;
+}
+
+.sunrise-sunset > * {
+	position: absolute;
+	transform: translateX(-50%);
+	text-align: center;
+}
+
+.sunrise-sunset svg {
+	margin-left: 0;
+	margin-right: 0;
+	margin-bottom: .25rem;
+	background-color: #000;
+	box-shadow: -3px 0 0 black, 3px 0 0 black;
+}
+
+.sunrise-sunset span {
+	display: block;
+	font-size: 70%;
+}
+
+.forecast__data-point--hmdy {
+	margin-top: 2px;
+	width: 100%;
+	height: 20px;
+	border-collapse: collapse;
+}
+
+.forecast__data-point--hmdy-value {
+	font-size: 80%;
+	color: #0a95d7;
+}
+
+.forecast__data-point--hmdy-bar {
+	width: 32%;
+	margin-right: 1px;
+	vertical-align: bottom;
+	padding: 0 1px;
+}
+
+.forecast__data-point--hmdy-bar > div {
+	background-color: #0a95d7;
+}
+
+.forecast__data-point--hmdy-bar .forecast__data-point--hmdy-bar__null {
+	height: 1px;
+	background-color: #333;
 }
 
 .padded {
-	padding: 2rem 0;
+	padding: 2rem;
 }
 
 #forecast {
@@ -364,8 +416,32 @@ button {
 
 .forecast__data-point {
 	display: table-cell;
-	padding: 16px 1px;
+	padding: 0.5rem 1px;
 	vertical-align: bottom;
+}
+/*
+.forecast__data-point.near-future {
+	font-size: 2rem;
+}
+*/
+.weather-symbol {
+	width: 34px;
+	height: 44px;
+	display: block;
+}
+/*
+.near-future .weather-symbol {
+	width: 2.9em;
+	height: 2.9em;
+}
+*/
+.forecast__data-point--weekday,
+.forecast__data-point--hour {
+	display: block;
+}
+
+[data-precipitation-subtotal="0"] {
+	opacity: 0;
 }
 
 .colored-bg {
@@ -381,6 +457,7 @@ button {
 .forecast__data-point--hour {
 	opacity: .7;
 	font-size: 90%;
+	margin-top: .25rem;
 }
 
 /*
