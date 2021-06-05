@@ -244,7 +244,7 @@
 			if (element_type === 'outdoor') {
 				yaxis_options.min = outdoor_options.low;
 				yaxis_options.max = outdoor_options.high;
-				line_color = '#29abe2';
+				line_color = 'rgb(200, 20, 30)';
 				//yaxis_options.tickSize = 1;
 				yaxis_options.minTickSize = 2;
 				xaxis_options.ticks = 12;
@@ -253,7 +253,7 @@
 			if (element_type === 'indoor') {
 				yaxis_options.min = indoor_min_temp;
 				yaxis_options.max = indoor_max_temp;
-				line_color = '#29abe2';
+				line_color = 'rgb(200, 20, 30)';
 				yaxis_options.tickSize = null;
 				xaxis_options.ticks = 6;
 			}
@@ -262,10 +262,10 @@
 				$.plot(element_id, [
 					{
 						data: temperature_data_further,
-						color: 'rgba(41,171,226,0.2)',
+						color: "rgba(200, 20, 30, 0.3)",
 						threshold: {
 							below: 0,
-							color: "rgba(200, 20, 30, 0.3)"
+							color: 'rgba(41,171,226,0.2)',
 						},
 						shadowSize: 0,
 						lines: {
@@ -278,13 +278,14 @@
 						color: line_color,
 						threshold: {
 							below: 0,
-							color: "rgb(200, 20, 30)"
+							color: 'rgb(41,171,226)',
 						},
 						shadowSize: 0,
 						lines: {
 							show: true,
 							fill: true,
 							fillColor: { colors: [{ opacity: 0.2 }, { opacity: 0.5 }] }
+							//fillColor: { colors: [ 'rgba(0,0,0,0)', 'red'] }
 						}
 					},
 					{
@@ -319,7 +320,7 @@
 					],
 					grid: {
 						borderWidth: 0,
-						color: 'rgba(41,171,226,0.7)',
+						color: '#666666',
 						backgroundColor: 'rgba(240,240,240,0.1)',
 						//markings: [ { xaxis: { from: startOfDay, to: startOfDay }, color: "rgba(41,171,226,.2" } ]
 					},
@@ -330,7 +331,7 @@
 				$.plot(element_id, [
 					{
 						data: temperature_data_further,
-						color: 'rgba(41,171,226,0.2)',
+						color: 'rgba(200, 20, 30,0.2)',
 						shadowSize: 0,
 						lines: {
 							show: true,
@@ -342,7 +343,7 @@
 						color: line_color,
 						threshold: {
 							below: 0,
-							color: "rgb(200, 20, 30)"
+							color: "rgb(41,171,226)"
 						},
 						shadowSize: 0,
 						lines: {
@@ -357,7 +358,7 @@
 					yaxis: yaxis_options,
 					grid: {
 						borderWidth: 0,
-						color: 'rgba(41,171,226,0.7)',
+						color: '#666666',
 						backgroundColor: 'rgba(240,240,240,0.1)',
 						//markings: [ { xaxis: { from: startOfDay, to: startOfDay }, color: "rgba(41,171,226,.2" } ]
 					},
