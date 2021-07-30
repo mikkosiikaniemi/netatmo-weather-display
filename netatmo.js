@@ -121,8 +121,19 @@
 		return Math.min.apply(Math, noNullsArray);
 	}
 
-	function array_max(array) {
-		return Math.max.apply(Math, array);
+	/**
+	 * Find the largest value in array. If value is smaller than "ceil"
+	 * parameter, return ceil instead.
+	 * Optional multiplier can be used to scale up if greater than "ceil".
+	 */
+	function array_max(values, ceil, multiplier) {
+		multiplier = (typeof multiplier !== 'undefined') ? multiplier : 1;
+		var max = Math.max.apply(Math, values);
+		if (max < ceil) {
+			return ceil;
+		} else {
+			return max * multiplier;
+		}
 	}
 
 	function drawCharts() {
@@ -155,22 +166,22 @@
 		var indoor_max_temp = null;
 
 		if (indoor_modules.length >= 1) {
-			indoor_min_temp = parseFloat( indoor_modules[0].getAttribute('data-min-temp') );
-			indoor_max_temp = parseFloat( indoor_modules[0].getAttribute('data-max-temp') );
+			indoor_min_temp = Math.floor( indoor_modules[0].getAttribute('data-min-temp') );
+			indoor_max_temp = Math.ceil( indoor_modules[0].getAttribute('data-max-temp') );
 
 			for (var o = 0; o < indoor_modules.length; o++) {
-				if( parseFloat( indoor_modules[o].getAttribute('data-min-temp') ) < indoor_min_temp ) {
-					indoor_min_temp = parseFloat( indoor_modules[o].getAttribute('data-min-temp') );
+				if( Math.floor( indoor_modules[o].getAttribute('data-min-temp') ) < indoor_min_temp ) {
+					indoor_min_temp = Math.floor( indoor_modules[o].getAttribute('data-min-temp') );
 				}
-				if( parseFloat( indoor_modules[o].getAttribute('data-max-temp') ) > indoor_max_temp ) {
-					indoor_max_temp = parseFloat( indoor_modules[o].getAttribute('data-max-temp') );
+				if( Math.ceil( indoor_modules[o].getAttribute('data-max-temp') ) > indoor_max_temp ) {
+					indoor_max_temp = Math.ceil( indoor_modules[o].getAttribute('data-max-temp') );
 				}
 			}
 		}
 
-		if ( indoor_max_temp - indoor_min_temp < 4 ) {
-			indoor_min_temp = indoor_min_temp - 1;
-			indoor_max_temp = indoor_max_temp + 1;
+		if ( indoor_max_temp - indoor_min_temp < 3 ) {
+			indoor_min_temp = indoor_min_temp - 1.5;
+			indoor_max_temp = indoor_max_temp + 1.5;
 		} else {
 			indoor_min_temp = indoor_min_temp - 0.5;
 			indoor_max_temp = indoor_max_temp + 0.5;
@@ -187,7 +198,7 @@
 			var temperature_data_recent = $(element).data('points');
 			var temperature_data_further = $(element).data('further-points');
 			var rain_data = $(element).data('rain-points');
-			var humidity = $(element).data('rain-points');
+			var humidity_data = $(element).data('humidity');
 			var element_type = $(element).data('module-type');
 
 			var min_temp = $(element).data('min-temp');
@@ -221,7 +232,7 @@
 			font_spec = {
 				size: 11,
 				lineHeight: 13,
-				family: "HelveticaNeue",
+				family: "HelveticaNeue, sans-serif",
 				color: "#888888"
 			};
 
@@ -310,7 +321,7 @@
 						yaxis_options, // options for the first y-axis
 						{              // options for the second y-axis
 							min: 0,
-							max: array_max( rain_measures ) * 4,
+							max: array_max( rain_measures, 1.5, 4 ),
 							tickDecimals: 1,
 							font: font_spec,
 							position: 'right',
@@ -329,6 +340,18 @@
 
 			if( element_type === 'indoor' ) {
 				$.plot(element_id, [
+					{
+						data: humidity_data,
+						color: 'rgba(41,171,226,0.2)',
+						yaxis: 2,
+						lines: {
+							show: true,
+							fill: false,
+							lineWidth: 2,
+							shadowSize: 0,
+							borderWidth: 1,
+						}
+					},
 					{
 						data: temperature_data_further,
 						color: 'rgba(200, 20, 30,0.2)',
@@ -355,7 +378,19 @@
 				],
 				{
 					xaxis: xaxis_options,
-					yaxis: yaxis_options,
+					yaxes: [
+						yaxis_options, // options for the first y-axis
+						{              // options for the second y-axis
+							min: 20,
+							max: 60,
+							tickDecimals: 0,
+							font: font_spec,
+							position: 'right',
+							tickColor: 'rgba(240,240,240,0.2)',
+							alignTicksWithAxis: 1,
+							minTickSize: 10,
+						}
+					],
 					grid: {
 						borderWidth: 0,
 						color: '#666666',
