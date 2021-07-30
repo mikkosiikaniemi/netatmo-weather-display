@@ -228,7 +228,7 @@ p {
 .module-outdoor .flot-chart {
 	display: inline-block;
 	width: 50%;
-	height: 280px;
+	height: 281px;
 }
 
 .module-indoor .module__details {
@@ -236,7 +236,7 @@ p {
 }
 
 .module-indoor .flot-chart {
-	height: 150px;
+	height: 151px;
 }
 
 .module__details--co2 {
