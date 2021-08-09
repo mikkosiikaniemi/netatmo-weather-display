@@ -23,6 +23,35 @@ define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
 DEFINE( 'NETATMO_UPDATE_INTERVAL', 11 * MINUTE_IN_SECONDS );
 
 /**
+ * Drop-in replacement for PHP's "file_get_contents", as "allow_url_fopen"
+ * is not allowed at Opalstack.
+ */
+function ug_file_get_contents( $url ) {
+
+	if ( ! function_exists( 'curl_init' ) ) {
+		die( 'CURL is not installed!' );
+	}
+	$ch = curl_init();
+
+	if ( $ch === false ) {
+		throw new Exception( 'failed to initialize' );
+	}
+
+	curl_setopt( $ch, CURLOPT_URL, $url );
+	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+
+	$output = curl_exec( $ch );
+
+	// Check the return value of curl_exec(), too.
+	if ( $output === false ) {
+		throw new Exception( curl_error( $ch ), curl_errno( $ch ) );
+	}
+
+	curl_close( $ch );
+	return $output;
+}
+
+/**
  * Print temperatures for all modules
  */
 function print_temperatures() {
@@ -37,7 +66,7 @@ function print_temperatures() {
 
 	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token=' . $_SESSION['access_token'];
 
-	$remote_data = file_get_contents( $api_url );
+	$remote_data = ug_file_get_contents( $api_url );
 
 	if ( false === $remote_data ) {
 		throw new Exception( 'Failed to get station data.' );
@@ -196,7 +225,7 @@ function get_module_info( $module, $rain_module = false ) {
 	);
 
 	$module_api_url      = 'https://api.netatmo.com/api/getmeasure?' . $recent_history_query;
-	$module_history      = file_get_contents( $module_api_url );
+	$module_history      = ug_file_get_contents( $module_api_url );
 	$module_history_json = json_decode( $module_history );
 
 	//mikrogramma_debug( $module_history_json );
@@ -264,7 +293,7 @@ function get_module_info( $module, $rain_module = false ) {
 			);
 
 			$module_api_url      = 'https://api.netatmo.com/api/getmeasure?' . $rain_query;
-			$module_history      = file_get_contents( $module_api_url );
+			$module_history      = ug_file_get_contents( $module_api_url );
 			$module_history_json = json_decode( $module_history );
 			$rain_data_points = array();
 
@@ -314,29 +343,25 @@ function get_access_token() {
 
 	$token_url = 'https://api.netatmo.com/oauth2/token';
 
-	$postdata = http_build_query(
-		array(
-			'grant_type'    => 'authorization_code',
-			'client_id'     => $client_id,
-			'client_secret' => $client_secret,
-			'code'          => $code,
-			'redirect_uri'  => $local_url,
-			'scope'         => 'read_station',
-		)
+	$post_content = array(
+		'grant_type'    => 'authorization_code',
+		'client_id'     => $client_id,
+		'client_secret' => $client_secret,
+		'code'          => $code,
+		'redirect_uri'  => $local_url,
+		'scope'         => 'read_station',
 	);
 
-	$opts = array(
-		'http' =>
-		array(
-			'method'  => 'POST',
-			'header'  => 'Content-type: application/x-www-form-urlencoded;charset=UTF-8',
-			'content' => $postdata,
-		),
-	);
+	$ch = curl_init();
 
-	$context = stream_context_create( $opts );
+	curl_setopt( $ch, CURLOPT_URL, $token_url );
+	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+	curl_setopt( $ch, CURLOPT_POSTFIELDS, $post_content );
 
-	$response = file_get_contents( $token_url, false, $context );
+	$response = curl_exec( $ch );
+
+	curl_close( $ch );
+
 	$params   = null;
 	$params   = json_decode( $response, true );
 
@@ -358,27 +383,22 @@ function refresh_token() {
 
 	$token_url = 'https://api.netatmo.com/oauth2/token';
 
-	$postdata = http_build_query(
-		array(
-			'grant_type'    => 'refresh_token',
-			'client_id'     => $client_id,
-			'client_secret' => $client_secret,
-			'refresh_token' => $_SESSION['refresh_token'],
-		)
+	$post_content = array(
+		'grant_type'    => 'refresh_token',
+		'client_id'     => $client_id,
+		'client_secret' => $client_secret,
+		'refresh_token' => $_SESSION['refresh_token'],
 	);
 
-	$opts = array(
-		'http' =>
-		array(
-			'method'  => 'POST',
-			'header'  => 'Content-type: application/x-www-form-urlencoded;charset=UTF-8',
-			'content' => $postdata,
-		),
-	);
+	$ch = curl_init();
 
-	$context = stream_context_create( $opts );
+	curl_setopt( $ch, CURLOPT_URL, $token_url );
+	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+	curl_setopt( $ch, CURLOPT_POSTFIELDS, $post_content );
 
-	$response = file_get_contents( $token_url, false, $context );
+	$response = curl_exec( $ch );
+
+	curl_close( $ch );
 
 	if ( false !== $response ) {
 		$params = json_decode( $response, true );
@@ -504,7 +524,9 @@ function print_forecast() {
 
 //	mikrogramma_debug( $today_forecast_url);
 
-	$today_forecast_xml = simplexml_load_file( $today_forecast_url );
+	$today_forecast_raw = ug_file_get_contents( $today_forecast_url );
+	$today_forecast_xml = simplexml_load_string( $today_forecast_raw );
+
 	$temperatures = array();
 	$symbols      = array();
 
@@ -546,7 +568,8 @@ function print_forecast() {
 
 	$future_forecast_url = 'https://opendata.fmi.fi/wfs?request=getFeature&starttime=' . $future_start_time . 'Z&endtime=' . $future_end_time . 'Z&latlon=62.7594,22.8683&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Temperature,WeatherSymbol3&timestep=' . $future_timestep_hours * 60;
 
-	$future_forecast_xml = simplexml_load_file( $future_forecast_url );
+	$future_forecast_raw = ug_file_get_contents( $future_forecast_url );
+	$future_forecast_xml = simplexml_load_string( $future_forecast_raw );
 	$future_forecast = array();
 
 	$future_members = $future_forecast_xml->children( 'wfs', true );
@@ -581,7 +604,8 @@ function print_forecast() {
 
 	$precipitation_forecast_url = 'https://opendata.fmi.fi/wfs?request=getFeature&starttime=' . $precipitation_start_time . '&endtime=' . $future_end_time . '&latlon=62.7594,22.8683&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Precipitation1h&timestep=60';
 
-	$precipitation_forecast_xml = simplexml_load_file( $precipitation_forecast_url );
+	$precipitation_forecast_raw = ug_file_get_contents( $precipitation_forecast_url );
+	$precipitation_forecast_xml = simplexml_load_string( $precipitation_forecast_raw );
 	$precipitation_members = $precipitation_forecast_xml->children( 'wfs', true );
 	$precipitation_forecast = array();
 	$precipitations = array();
