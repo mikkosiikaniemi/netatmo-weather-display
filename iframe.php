@@ -82,6 +82,7 @@ if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state']
 	<meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 	<link rel="stylesheet" href="netatmo.css?ver=<?php echo filemtime( 'netatmo.css' ); ?>">
+	<link rel="shortcut icon" href="apple-touch-icon.png" />
 </head>
 
 <body class="dark-mode">
