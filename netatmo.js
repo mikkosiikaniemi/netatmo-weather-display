@@ -115,10 +115,22 @@
 		return value !== null;
 	}
 
-	function array_min(array) {
+	/**
+	 * Find the smallest value in array. If value is greater than "floor"
+	 * parameter, return floor instead.
+	 * Optional multiplier can be used to scale the value.
+	 */
+	function array_min(values, floor, multiplier) {
 		// Remove null values from temperatures first
-		var noNullsArray = array.filter(removeNulls);
-		return Math.min.apply(Math, noNullsArray);
+		//var noNullsArray = array.filter(removeNulls);
+		//var min = Math.min.apply(Math, noNullsArray);
+		multiplier = (typeof multiplier !== 'undefined') ? multiplier : 1;
+		var min = Math.min.apply(Math, values);
+		if (min > floor) {
+			return floor;
+		} else {
+			return min * multiplier;
+		}
 	}
 
 	/**
@@ -164,10 +176,15 @@
 		var indoor_modules = document.querySelectorAll('div[data-module-type="indoor"]');
 		var indoor_min_temp = null;
 		var indoor_max_temp = null;
+		var indoor_min_hmdy = null;
+		var indoor_max_hmdy = null;
 
 		if (indoor_modules.length >= 1) {
 			indoor_min_temp = Math.floor( indoor_modules[0].getAttribute('data-min-temp') );
-			indoor_max_temp = Math.ceil( indoor_modules[0].getAttribute('data-max-temp') );
+			indoor_max_temp = Math.ceil(indoor_modules[0].getAttribute('data-max-temp'));
+
+			indoor_min_hmdy = Math.floor( indoor_modules[0].getAttribute('data-min-hmdy') );
+			indoor_max_hmdy = Math.ceil( indoor_modules[0].getAttribute('data-max-hmdy') );
 
 			for (var o = 0; o < indoor_modules.length; o++) {
 				if( Math.floor( indoor_modules[o].getAttribute('data-min-temp') ) < indoor_min_temp ) {
@@ -176,8 +193,17 @@
 				if( Math.ceil( indoor_modules[o].getAttribute('data-max-temp') ) > indoor_max_temp ) {
 					indoor_max_temp = Math.ceil( indoor_modules[o].getAttribute('data-max-temp') );
 				}
+
+				if( Math.floor( indoor_modules[o].getAttribute('data-min-hmdy') ) < indoor_min_hmdy ) {
+					indoor_min_hmdy = Math.floor( indoor_modules[o].getAttribute('data-min-hmdy') );
+				}
+				if( Math.ceil( indoor_modules[o].getAttribute('data-max-hmdy') ) > indoor_max_hmdy ) {
+					indoor_max_hmdy = Math.ceil( indoor_modules[o].getAttribute('data-max-hmdy') );
+				}
 			}
 		}
+
+		console.log(indoor_min_hmdy, indoor_max_hmdy);
 
 		if ( indoor_max_temp - indoor_min_temp < 3 ) {
 			indoor_min_temp = indoor_min_temp - 1.5;
@@ -266,6 +292,7 @@
 				yaxis_options.max = indoor_max_temp;
 				line_color = 'rgb(200, 20, 30)';
 				yaxis_options.tickSize = null;
+				yaxis_options.minTickSize = 2;
 				xaxis_options.ticks = 6;
 			}
 
@@ -321,7 +348,7 @@
 						yaxis_options, // options for the first y-axis
 						{              // options for the second y-axis
 							min: 0,
-							max: array_max( rain_measures, 1.5, 4 ),
+							max: array_max( rain_measures, 3, 4 ),
 							tickDecimals: 1,
 							font: font_spec,
 							position: 'right',
@@ -381,14 +408,14 @@
 					yaxes: [
 						yaxis_options, // options for the first y-axis
 						{              // options for the second y-axis
-							min: 20,
-							max: 60,
+							min: indoor_min_hmdy - 1,
+							max: indoor_max_hmdy * 1.75,
 							tickDecimals: 0,
 							font: font_spec,
 							position: 'right',
 							tickColor: 'rgba(240,240,240,0.2)',
 							alignTicksWithAxis: 1,
-							minTickSize: 10,
+							minTickSize: 5,
 						}
 					],
 					grid: {

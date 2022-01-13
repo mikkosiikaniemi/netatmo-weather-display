@@ -235,6 +235,7 @@ function get_module_info( $module, $rain_module = false ) {
 	$recent_humidity = array();
 	$time_24hrs_ago = strtotime( 'today', time() );//time() - DAY_IN_SECONDS;
 	$min_temp = $max_temp = $module_history_json->body[0]->value[0][0];
+	$min_hmdy = $max_hmdy = $module_history_json->body[0]->value[0][1];
 
 	foreach ( $module_history_json->body as $data_point ) {
 
@@ -262,6 +263,13 @@ function get_module_info( $module, $rain_module = false ) {
 			}
 			if( $temp < $min_temp ) {
 				$min_temp = $temp;
+			}
+
+			if( $hmdy > $max_hmdy ) {
+				$max_hmdy = $hmdy;
+			}
+			if( $hmdy < $min_hmdy ) {
+				$min_hmdy = $hmdy;
 			}
 		}
 	}
@@ -313,7 +321,7 @@ function get_module_info( $module, $rain_module = false ) {
 		}
 	}
 
-	$output .= '<div class="flot-chart" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $recent_temperatures ) . '" data-module-type="' . $module_type . '" data-min-temp="' . $min_temp . '" data-max-temp="' . $max_temp . '"';
+	$output .= '<div class="flot-chart" id="module-' . strtolower( trim( preg_replace( '/[^A-Za-z0-9-]+/', '-', $module->_id ) ) ) . '" data-points="' . json_encode( $recent_temperatures ) . '" data-module-type="' . $module_type . '" data-min-temp="' . $min_temp . '" data-max-temp="' . $max_temp . '" data-min-hmdy="' . $min_hmdy . '" data-max-hmdy="' . $max_hmdy . '"';
 
 	$output .= ' data-further-points="' . json_encode( $further_temperatures ) . '"';
 
