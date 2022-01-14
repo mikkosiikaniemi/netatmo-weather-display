@@ -165,8 +165,10 @@
 		if (outdoor_modules.length >= 1) {
 			for (var m = 0; m < outdoor_modules.length; m++) {
 				rain_data_points = JSON.parse(outdoor_modules[m].getAttribute('data-rain-points'));
-				for (n = 0; n < rain_data_points.length; n++) {
-					rain_measures.push(rain_data_points[n][1]);
+				if (rain_data_points) {
+					for (n = 0; n < rain_data_points.length; n++) {
+						rain_measures.push(rain_data_points[n][1]);
+					}
 				}
 			}
 		}
@@ -202,8 +204,6 @@
 				}
 			}
 		}
-
-		console.log(indoor_min_hmdy, indoor_max_hmdy);
 
 		if ( indoor_max_temp - indoor_min_temp < 3 ) {
 			indoor_min_temp = indoor_min_temp - 1.5;
