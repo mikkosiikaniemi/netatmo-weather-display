@@ -21,13 +21,13 @@ gulp.task('svgstore', function () {
 		}))
 		.pipe(svgstore({ inlineSvg: true }))
 		.pipe(cheerio({
-				run: function ($) {
-						$('svg').attr('style',  'display:none');
-				},
-				parserOptions: { xmlMode: true }
+			run: function ($) {
+				$('svg').attr('style', 'display:none');
+			},
+			parserOptions: { xmlMode: true }
 		}))
 		.pipe(rename('svg-symbols.svg'))
 		.pipe(gulp.dest('.'));
 });
 
-gulp.task('default', [ 'svgstore' ]);
+gulp.task('default', gulp.series('svgstore'));
