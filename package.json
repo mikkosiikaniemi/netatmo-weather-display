@@ -3,14 +3,17 @@
   "version": "1.0.0",
   "description": "A weather display web application for presenting temperature information gathered by locally installed Netatmo weather sensors.",
   "main": "gulpfile.js",
-  "dependencies": {},
   "devDependencies": {
     "gulp": "^4.0.2",
     "gulp-cheerio": "^1.0.0",
     "gulp-rename": "^1.4.0",
-    "gulp-svgmin": "^2.2.0",
+    "gulp-svgmin": "^4.1.0",
     "gulp-svgstore": "^7.0.1",
     "path": "^0.12.7"
+  },
+  "overrides": {
+    "glob-parent": ">=5.1.2",
+		"nth-check": ">=2.0.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
