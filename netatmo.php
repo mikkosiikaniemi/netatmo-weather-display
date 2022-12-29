@@ -80,7 +80,6 @@ function print_temperatures() {
 		// Take only the first station's info
 		$station = $stations->body->devices[0];
 
-		// mikrogramma_debug( $station );
 		// Find the outdoor module and its index amongst connected modules
 		$outdoor_module_index = array_search( 'NAModule1', array_column( $station->modules, 'type' ) );
 
@@ -124,8 +123,6 @@ function print_temperatures() {
  */
 function get_module_info( $module, $rain_module = false ) {
 
-	global $station_mac;
-
 	if ( $module->type === 'NAMain' || $module->type === 'NAModule4' ) {
 		$module_type = 'indoor';
 	} elseif ( $module->type === 'NAModule1' ) {
@@ -133,8 +130,6 @@ function get_module_info( $module, $rain_module = false ) {
 	} elseif ( $module->type === 'NAModule3' ) {
 		$module_type = 'rain_gauge';
 	}
-
-	//mikrogramma_debug( $module );
 
 	$output = '';
 	ob_start();
@@ -212,7 +207,7 @@ function get_module_info( $module, $rain_module = false ) {
 	$recent_history_query = http_build_query(
 		array(
 			'access_token' => $_SESSION['access_token'],
-			'device_id'    => $station_mac,
+			'device_id'    => STATION_MAC,
 			'module_id'    => $module->_id,
 			'scale'        => 'max',
 			'real_time'    => 'true',
@@ -225,8 +220,6 @@ function get_module_info( $module, $rain_module = false ) {
 	$module_api_url      = 'https://api.netatmo.com/api/getmeasure?' . $recent_history_query;
 	$module_history      = ug_file_get_contents( $module_api_url );
 	$module_history_json = json_decode( $module_history );
-
-	//mikrogramma_debug( $module_history_json );
 
 	$recent_temperatures = array();
 	$further_temperatures = array();
@@ -287,7 +280,7 @@ function get_module_info( $module, $rain_module = false ) {
 			$rain_query = http_build_query(
 				array(
 					'access_token' => $_SESSION['access_token'],
-					'device_id'    => $station_mac,
+					'device_id'    => STATION_MAC,
 					'module_id'    => $rain_module->_id,
 					'scale'        => '30min',
 					'real_time'    => 'true',
@@ -343,18 +336,14 @@ function get_access_token() {
 
 	$code = $_GET['code'];
 
-	global $client_id;
-	global $client_secret;
-	global $local_url;
-
 	$token_url = 'https://api.netatmo.com/oauth2/token';
 
 	$post_content = array(
 		'grant_type'    => 'authorization_code',
-		'client_id'     => $client_id,
-		'client_secret' => $client_secret,
+		'client_id'     => CLIENT_ID,
+		'client_secret' => CLIENT_SECRET,
 		'code'          => $code,
-		'redirect_uri'  => $local_url,
+		'redirect_uri'  => LOCAL_URL,
 		'scope'         => 'read_station',
 	);
 
@@ -384,15 +373,12 @@ function get_access_token() {
  */
 function refresh_token() {
 
-	global $client_id;
-	global $client_secret;
-
 	$token_url = 'https://api.netatmo.com/oauth2/token';
 
 	$post_content = array(
 		'grant_type'    => 'refresh_token',
-		'client_id'     => $client_id,
-		'client_secret' => $client_secret,
+		'client_id'     => CLIENT_ID,
+		'client_secret' => CLIENT_SECRET,
 		'refresh_token' => $_SESSION['refresh_token'],
 	);
 
@@ -425,17 +411,14 @@ function refresh_token() {
  */
 function login_netatmo() {
 
-	global $client_id;
-	global $local_url;
-
 	// Generate unique session ID
 	$_SESSION['state'] = md5( uniqid( rand(), true ) );
 
 	// Build URL
 	$dialog_url_params = http_build_query(
 		array(
-			'client_id'    => $client_id,
-			'redirect_uri' => urlencode( $local_url ),
+			'client_id'    => CLIENT_ID,
+			'redirect_uri' => urlencode( LOCAL_URL ),
 			'scope'        => 'read_station',
 			'state'        => $_SESSION['state'],
 		)
@@ -449,7 +432,6 @@ function login_netatmo() {
 function logout_netatmo() {
 	session_unset();
 	session_destroy();
-	mikrogramma_debug( $_SESSION );
 	echo 'Sinut on kirjattu ulos. <a href="' . basename( $_SERVER['PHP_SELF'] ) . '">Kirjaudu uudelleen.</a>';
 	die();
 }
@@ -526,9 +508,7 @@ function print_forecast() {
 		$today_timestep_hours = 1;
 	}
 
-	$today_forecast_url = 'https://opendata.fmi.fi/wfs?request=getFeature&starttime=' . $today_start_time . 'Z&endtime=' . $today_end_time . 'Z&latlon=62.7594,22.8683&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Temperature,WeatherSymbol3&timestep=' . $today_timestep_hours * 60;
-
-//	mikrogramma_debug( $today_forecast_url);
+	$today_forecast_url = 'https://opendata.fmi.fi/wfs?request=getFeature&starttime=' . $today_start_time . 'Z&endtime=' . $today_end_time . 'Z&latlon=' . LATITUDE . ',' . LONGITUDE . '&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Temperature,WeatherSymbol3&timestep=' . $today_timestep_hours * 60;
 
 	$today_forecast_raw = ug_file_get_contents( $today_forecast_url );
 	$today_forecast_xml = simplexml_load_string( $today_forecast_raw );
@@ -787,14 +767,6 @@ function print_forecast() {
 		} else {
 			$sunrise = date_sunrise( $data_point['time'] , SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
 		}
-
-		/*
-		mikrogramma_debug( array(
-			$sunset,
-			$data_point['time'],
-			$sunrise
-		));
-		*/
 
 		$symbol_number = (int) $data_point['symbol'];
 		if ( array_key_exists( $symbol_number, $fmi_weather_symbols ) ) {

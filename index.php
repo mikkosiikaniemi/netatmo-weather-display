@@ -15,30 +15,13 @@ session_start();
 date_default_timezone_set('Europe/Helsinki');
 setlocale(LC_TIME, "fi");
 
-/**
- * Check if the obligatory configuration file exists.
- * You can get the ID and secret after creating an app at
- * https://dev.netatmo.com/myaccount/createanapp
- *
- * // Client ID and secret
- * $client_id     = '';
- * $client_secret = '';
- *
- * // Define the local redirect URL
- * $local_url = '';
- *
- * // Netatmo main module (station) MAC address
- * $station_mac = '';
- */
+// Check if the obligatory configuration file exists.
 if ( false === file_exists( 'config.php' ) ) {
 	die( 'Konfiguraatiotiedostoa ei ole olemassa.');
 } else {
 	// Initialize helper functions
 	require_once 'netatmo.php';
 }
-
-//mikrogramma_debug( $_SESSION );
-//mikrogramma_debug( $_GET );
 
 // If user chose to log out
 if ( isset( $_POST['logout'] ) ) {
@@ -78,7 +61,7 @@ if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state']
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
-	<title>Ukkoherranlenkki 4 Netatmo</title>
+	<title>Netatmo Sää</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 	<link rel="stylesheet" href="netatmo.css?ver=<?php echo filemtime( 'netatmo.css' ); ?>">
@@ -97,8 +80,8 @@ if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state']
 
 	<div class="sunrise-sunset">
 		<?php
-			$sunrise = date_sunrise( time(), SUNFUNCS_RET_TIMESTAMP, $latitude, $longitude, 90 );
-			$sunset  = date_sunset( time(), SUNFUNCS_RET_TIMESTAMP, $latitude, $longitude, 90 );
+			$sunrise = date_sunrise( time(), SUNFUNCS_RET_TIMESTAMP, LATITUDE, LONGITUDE, 90 );
+			$sunset  = date_sunset( time(), SUNFUNCS_RET_TIMESTAMP, LATITUDE, LONGITUDE, 90 );
 			$sunrise_minutes = date( 'H', $sunrise ) * 60 + date( 'i', $sunrise );
 			$sunset_minutes = date( 'H', $sunset ) * 60 + date( 'i', $sunset );
 			$sunrise_percent = round( ( $sunrise_minutes / ( 24 * 60 ) ) * 100, 2 );
