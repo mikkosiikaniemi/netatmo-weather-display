@@ -1,0 +1,5 @@
+{
+    "require": {
+        "rugaard/oauth2-netatmo": "^1.0"
+    }
+}
