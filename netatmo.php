@@ -56,15 +56,11 @@ function ug_file_get_contents( $url ) {
  */
 function print_temperatures() {
 
-	// Refresh expired token
-	if ( time() > $_SESSION['token_expires'] ) {
-		$token_status = refresh_token();
-		if ( false === $token_status ) {
-			throw new Exception( 'Refreshing tokens failed.' );
-		}
+	if ( $_SESSION[ 'expires_in' ] < time() ) {
+		refresh_token();
 	}
 
-	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token=' . $_SESSION['access_token'];
+	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token=' . $_SESSION[ 'access_token' ];
 
 	$remote_data = ug_file_get_contents( $api_url );
 
@@ -86,7 +82,7 @@ function print_temperatures() {
 		// Find the rain gauge module and its index amongst connected modules
 		$rain_gauge_index = array_search( 'NAModule3', array_column( $station->modules, 'type' ) );
 
-		$output .= 	'<div id="temperatures">';
+		$output .= '<div id="temperatures">';
 		$output .= '<div class="modules">';
 
 		// Print the outdoor module info together with rain measures
@@ -107,8 +103,8 @@ function print_temperatures() {
 		$output .= '</div>';
 		$output .= '</div>';
 
-		//$output .= '<p class="data-time">Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
-		//$output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['token_expires'] ) . '.</p>';
+		// $output .= '<p class="data-time">Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
+		// $output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['token_expires'] ) . '.</p>';
 
 		$output .= print_forecast();
 
@@ -159,7 +155,7 @@ function get_module_info( $module, $rain_module = false ) {
 					if ( $co2_level > 2000 ) {
 						$co2_color = 'red';
 					}
-			?>
+					?>
 			<div class="module__details--co2 co2-level-<?php echo $co2_color; ?>" title="<?php echo $co2_level; ?>"></div>
 			<?php endif; ?>
 			<div class="module__details--humidity"><?php echo $module->dashboard_data->Humidity; ?> %</div>
@@ -173,12 +169,12 @@ function get_module_info( $module, $rain_module = false ) {
 
 			<div class="module__details--temp
 			<?php
-				$temperature       = number_format( $module->dashboard_data->Temperature, 1 );
+				$temperature = number_format( $module->dashboard_data->Temperature, 1 );
 
 				// Modify classes when very cold to compensate the char amount (font size) with CSS
-				if ( $temperature <= -10 ) {
-					echo ' module__details--temp-verycold';
-				}
+			if ( $temperature <= -10 ) {
+				echo ' module__details--temp-verycold';
+			}
 				echo '">';
 
 				$temperature_parts = explode( '.', $temperature );
@@ -195,7 +191,7 @@ function get_module_info( $module, $rain_module = false ) {
 				<?php echo number_format( $module->dashboard_data->max_temp, 1 ); ?>°
 				<?php if ( $rain_module->reachable === true ) : ?>
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" class="icon-stroked"><path d="M23 12a11.05 11.05 0 0 0-22 0zm-5 7a3 3 0 0 1-6 0v-7"></path></svg>
-				<?php echo $rain_module->dashboard_data->sum_rain_24; ?> mm
+					<?php echo $rain_module->dashboard_data->sum_rain_24; ?> mm
 				<?php endif; ?>
 			</div>
 			<?php endif; ?>
@@ -212,8 +208,8 @@ function get_module_info( $module, $rain_module = false ) {
 			'scale'        => 'max',
 			'real_time'    => 'true',
 			'type'         => 'Temperature,Humidity',
-			'date_begin'   => strtotime( 'yesterday', time() ),//( time() - ( 2 * DAY_IN_SECONDS ) ),
-			//'limit'        => 1000,
+			'date_begin'   => strtotime( 'yesterday', time() ), // ( time() - ( 2 * DAY_IN_SECONDS ) ),
+			// 'limit'        => 1000,
 		)
 	);
 
@@ -221,12 +217,12 @@ function get_module_info( $module, $rain_module = false ) {
 	$module_history      = ug_file_get_contents( $module_api_url );
 	$module_history_json = json_decode( $module_history );
 
-	$recent_temperatures = array();
+	$recent_temperatures  = array();
 	$further_temperatures = array();
-	$recent_humidity = array();
-	$time_24hrs_ago = strtotime( 'today', time() );//time() - DAY_IN_SECONDS;
-	$min_temp = $max_temp = $module_history_json->body[0]->value[0][0];
-	$min_hmdy = $max_hmdy = $module_history_json->body[0]->value[0][1];
+	$recent_humidity      = array();
+	$time_24hrs_ago       = strtotime( 'today', time() );// time() - DAY_IN_SECONDS;
+	$min_temp             = $max_temp = $module_history_json->body[0]->value[0][0];
+	$min_hmdy             = $max_hmdy = $module_history_json->body[0]->value[0][1];
 
 	foreach ( $module_history_json->body as $data_point ) {
 
@@ -241,25 +237,24 @@ function get_module_info( $module, $rain_module = false ) {
 				$hmdy = $data_point->value[ $index ][1];
 			}
 
-			if( $time < $time_24hrs_ago ) {
-				$further_temperatures[] = [ ( $time + DAY_IN_SECONDS ) * 1000, $temp ];
-			}
-			else {
-				$recent_temperatures[] = [ $time * 1000, $temp ];
-				$recent_humidity[] = [ $time * 1000, $hmdy ];
+			if ( $time < $time_24hrs_ago ) {
+				$further_temperatures[] = array( ( $time + DAY_IN_SECONDS ) * 1000, $temp );
+			} else {
+				$recent_temperatures[] = array( $time * 1000, $temp );
+				$recent_humidity[]     = array( $time * 1000, $hmdy );
 			}
 
-			if( $temp > $max_temp ) {
+			if ( $temp > $max_temp ) {
 				$max_temp = $temp;
 			}
-			if( $temp < $min_temp ) {
+			if ( $temp < $min_temp ) {
 				$min_temp = $temp;
 			}
 
-			if( $hmdy > $max_hmdy ) {
+			if ( $hmdy > $max_hmdy ) {
 				$max_hmdy = $hmdy;
 			}
-			if( $hmdy < $min_hmdy ) {
+			if ( $hmdy < $min_hmdy ) {
 				$min_hmdy = $hmdy;
 			}
 		}
@@ -269,7 +264,7 @@ function get_module_info( $module, $rain_module = false ) {
 	 * Add current time as last data point, to compensate possible data or
 	 * service outages.
 	 */
-	$recent_temperatures[] = [ time() * 1000, null ];
+	$recent_temperatures[] = array( time() * 1000, null );
 
 	/**
 	 * Perform query for rain gauge measures.
@@ -286,7 +281,7 @@ function get_module_info( $module, $rain_module = false ) {
 					'real_time'    => 'true',
 					'type'         => 'sum_rain',
 					// 'date_begin'   => strtotime('today') - 10 * 60 * 60,
-					'date_begin'   => strtotime( 'today', time() ), //( time() - 24 * HOUR_IN_SECONDS ),
+					'date_begin'   => strtotime( 'today', time() ), // ( time() - 24 * HOUR_IN_SECONDS ),
 					'limit'        => 100,
 				)
 			);
@@ -294,7 +289,7 @@ function get_module_info( $module, $rain_module = false ) {
 			$module_api_url      = 'https://api.netatmo.com/api/getmeasure?' . $rain_query;
 			$module_history      = ug_file_get_contents( $module_api_url );
 			$module_history_json = json_decode( $module_history );
-			$rain_data_points = array();
+			$rain_data_points    = array();
 
 			foreach ( $module_history_json->body as $data_point ) {
 
@@ -306,7 +301,7 @@ function get_module_info( $module, $rain_module = false ) {
 						$time = ( $data_point->beg_time + $data_point->step_time * $index ) * 1000;
 						$temp = $data_point->value[ $index ][0];
 					}
-					$rain_data_points[] = [ $time, $temp ];
+					$rain_data_points[] = array( $time, $temp );
 				}
 			}
 		}
@@ -332,40 +327,26 @@ function get_module_info( $module, $rain_module = false ) {
 /**
  * Get access token
  */
+
 function get_access_token() {
 
-	$code = $_GET['code'];
+	global $provider;
 
-	$token_url = 'https://api.netatmo.com/oauth2/token';
-
-	$post_content = array(
-		'grant_type'    => 'authorization_code',
-		'client_id'     => CLIENT_ID,
-		'client_secret' => CLIENT_SECRET,
-		'code'          => $code,
-		'redirect_uri'  => LOCAL_URL,
-		'scope'         => 'read_station',
+	// Try to get an access token using the authorization code grant.
+	$accessToken = $provider->getAccessToken(
+		'authorization_code',
+		array(
+			'code' => $_GET['code'],
+		)
 	);
 
-	$ch = curl_init();
-
-	curl_setopt( $ch, CURLOPT_URL, $token_url );
-	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
-	curl_setopt( $ch, CURLOPT_POSTFIELDS, $post_content );
-
-	$response = curl_exec( $ch );
-
-	curl_close( $ch );
-
-	$params   = null;
-	$params   = json_decode( $response, true );
-
-	foreach ( array_keys( $params ) as $key ) {
-		$_SESSION[ $key ] = $params[ $key ];
-	}
-
-	$_SESSION['code']          = $code;
-	$_SESSION['token_expires'] = time() + $params['expires_in'];
+	// We have an access token, which we may use in authenticated
+	// requests against the service provider's API.
+	// Save tokens to session data.
+	$_SESSION[ 'access_token' ] = $accessToken->getToken();
+	$_SESSION[ 'refresh_token' ] = $accessToken->getRefreshToken();
+	$_SESSION[ 'expires_in' ] = $accessToken->getExpires();
+	$_SESSION[ 'expired' ] = $accessToken->hasExpired();
 }
 
 /**
@@ -373,60 +354,79 @@ function get_access_token() {
  */
 function refresh_token() {
 
-	$token_url = 'https://api.netatmo.com/oauth2/token';
+	global $provider;
 
-	$post_content = array(
-		'grant_type'    => 'refresh_token',
-		'client_id'     => CLIENT_ID,
-		'client_secret' => CLIENT_SECRET,
-		'refresh_token' => $_SESSION['refresh_token'],
+	$newAccessToken = $provider->getAccessToken(
+		'refresh_token',
+		array(
+			'refresh_token' => $_SESSION[ 'refresh_token' ],
+		)
 	);
 
-	$ch = curl_init();
-
-	curl_setopt( $ch, CURLOPT_URL, $token_url );
-	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
-	curl_setopt( $ch, CURLOPT_POSTFIELDS, $post_content );
-
-	$response = curl_exec( $ch );
-
-	curl_close( $ch );
-
-	if ( false !== $response ) {
-		$params = json_decode( $response, true );
-		foreach ( array_keys( $params ) as $key ) {
-			$_SESSION[ $key ] = $params[ $key ];
-		}
-		$_SESSION['token_expires'] = time() + $params['expires_in'];
-		return;
-	} else {
-		return false;
-	}
+	// Save tokens to session data.
+	$_SESSION[ 'access_token' ] = $newAccessToken->getToken();
+	$_SESSION[ 'refresh_token' ] = $newAccessToken->getRefreshToken();
+	$_SESSION[ 'expires_in' ] = $newAccessToken->getExpires();
+	$_SESSION[ 'expired' ] = $newAccessToken->hasExpired();
 }
 
 /**
- * Authenticate using Netatmo OAuth2 dialog
+ * Authenticate using Netatmo OAuth2 dialog.
+ * We're using "Netatmo Provider for OAuth 2.0 Client" by Morten Rugaard.
+ *
+ * @link https://github.com/rugaard/oauth2-netatmo
+ * @link https://oauth2-client.thephpleague.com/usage/
  *
  * @link https://dev.netatmo.com/resources/technical/guides/authentication/authorizationcode
  */
 function login_netatmo() {
 
-	// Generate unique session ID
-	$_SESSION['state'] = md5( uniqid( rand(), true ) );
+	global $provider;
 
-	// Build URL
-	$dialog_url_params = http_build_query(
-		array(
-			'client_id'    => CLIENT_ID,
-			'redirect_uri' => urlencode( LOCAL_URL ),
-			'scope'        => 'read_station',
-			'state'        => $_SESSION['state'],
-		)
-	);
+	// Already logged in?
+	if( isset( $_GET['code'] ) && isset( $_GET['state'] ) ) {
+		//return;
+	}
 
-	$dialog_url = 'https://api.netatmo.com/oauth2/authorize?' . $dialog_url_params;
-	header( 'Location: ' . $dialog_url );
-	die();
+	if ( ! isset( $_GET['code'] ) ) {
+
+		// Generate unique session ID
+		$_SESSION['state'] = md5( uniqid( '', false ) );
+
+		// Fetch the authorization URL from the provider; this returns the
+		// urlAuthorize option and generates and applies any necessary parameters
+		// (e.g. state).
+		$authorizationUrl = $provider->getAuthorizationUrl(
+			array(
+				'scope' => array( 'read_station' ),
+			)
+		);
+
+		// Get the state generated for you and store it to the session.
+		$_SESSION['oauth2state'] = $provider->getState();
+
+		// Redirect the user to the authorization URL.
+		header( 'Location: ' . $authorizationUrl );
+
+		exit;
+	} elseif ( empty( $_GET['state'] ) || empty( $_SESSION['oauth2state'] ) || $_GET['state'] !== $_SESSION['oauth2state'] ) {
+
+		if ( isset( $_SESSION['oauth2state'] ) ) {
+			unset( $_SESSION['oauth2state'] );
+		}
+
+		exit( 'Invalid state' );
+	} else {
+		try {
+			get_access_token();
+		} catch ( \League\OAuth2\Client\Provider\Exception\IdentityProviderException $e ) {
+			echo '<pre>' . print_r( $e, true ) . '</pre>';
+
+			// Failed to get the access token or user details.
+			exit( $e->getMessage() );
+
+		}
+	}
 }
 
 function logout_netatmo() {
@@ -467,13 +467,13 @@ function human_time_difference( $timestamp ) {
 	return floor( $seconds ) . ' sekuntia';
 }
 
-/**
- * Get weather forecast info from Ilmatieteenlaitos.
- */
+	/**
+	 * Get weather forecast info from Ilmatieteenlaitos.
+	 */
 function print_forecast() {
 	$output = '';
 
-	$fmi_weather_symbols = [
+	$fmi_weather_symbols = array(
 		3  => 7,
 		22 => 32,
 		23 => 33,
@@ -484,9 +484,9 @@ function print_forecast() {
 		81 => 47,
 		82 => 48,
 		83 => 49,
-	];
+	);
 
-	$weekday_names = [
+	$weekday_names = array(
 		'Mon' => 'Ma',
 		'Tue' => 'Ti',
 		'Wed' => 'Ke',
@@ -494,17 +494,17 @@ function print_forecast() {
 		'Fri' => 'Pe',
 		'Sat' => 'La',
 		'Sun' => 'Su',
-	];
+	);
 
 	// Get today's forecast, but only if there are hours left in this day
 	$today_forecast = array();
-	if( strtotime('tomorrow') < time() + HOUR_IN_SECONDS ) {
-		$today_start_time = date( 'Y-m-d\TH:i:s', strtotime( 'tomorrow' ) - date( 'Z' ) );
-		$today_end_time   = date( 'Y-m-d\TH:i:s', strtotime( 'tomorrow 23:00' ) - date( 'Z' ) );
+	if ( strtotime( 'tomorrow' ) < time() + HOUR_IN_SECONDS ) {
+		$today_start_time     = date( 'Y-m-d\TH:i:s', strtotime( 'tomorrow' ) - date( 'Z' ) );
+		$today_end_time       = date( 'Y-m-d\TH:i:s', strtotime( 'tomorrow 23:00' ) - date( 'Z' ) );
 		$today_timestep_hours = 2;
 	} else {
-		$today_start_time = date( 'Y-m-d\TH:i:s', time() - date( 'Z' ) );
-		$today_end_time   = date( 'Y-m-d\TH:i:s', strtotime( 'tomorrow' ) - HOUR_IN_SECONDS - date( 'Z' ) );
+		$today_start_time     = date( 'Y-m-d\TH:i:s', time() - date( 'Z' ) );
+		$today_end_time       = date( 'Y-m-d\TH:i:s', strtotime( 'tomorrow' ) - HOUR_IN_SECONDS - date( 'Z' ) );
 		$today_timestep_hours = 1;
 	}
 
@@ -548,15 +548,15 @@ function print_forecast() {
 		}
 	}
 
-	$future_start_time = date( 'Y-m-d\TH:i:s', strtotime( $today_end_time ) );
-	$future_end_time   = date( 'Y-m-d\TH:i:s', time() - date( 'Z' ) + 66 * HOUR_IN_SECONDS );
+	$future_start_time     = date( 'Y-m-d\TH:i:s', strtotime( $today_end_time ) );
+	$future_end_time       = date( 'Y-m-d\TH:i:s', time() - date( 'Z' ) + 66 * HOUR_IN_SECONDS );
 	$future_timestep_hours = 2;
 
 	$future_forecast_url = 'https://opendata.fmi.fi/wfs?request=getFeature&starttime=' . $future_start_time . 'Z&endtime=' . $future_end_time . 'Z&latlon=62.7594,22.8683&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Temperature,WeatherSymbol3&timestep=' . $future_timestep_hours * 60;
 
 	$future_forecast_raw = ug_file_get_contents( $future_forecast_url );
 	$future_forecast_xml = simplexml_load_string( $future_forecast_raw );
-	$future_forecast = array();
+	$future_forecast     = array();
 
 	$future_members = $future_forecast_xml->children( 'wfs', true );
 
@@ -584,7 +584,7 @@ function print_forecast() {
 		}
 	}
 
-	if( ! isset( $precipitation_start_time ) ) {
+	if ( ! isset( $precipitation_start_time ) ) {
 		$precipitation_start_time = $future_start_time;
 	}
 
@@ -592,9 +592,9 @@ function print_forecast() {
 
 	$precipitation_forecast_raw = ug_file_get_contents( $precipitation_forecast_url );
 	$precipitation_forecast_xml = simplexml_load_string( $precipitation_forecast_raw );
-	$precipitation_members = $precipitation_forecast_xml->children( 'wfs', true );
-	$precipitation_forecast = array();
-	$precipitations = array();
+	$precipitation_members      = $precipitation_forecast_xml->children( 'wfs', true );
+	$precipitation_forecast     = array();
+	$precipitations             = array();
 
 	foreach ( $precipitation_members as $member ) {
 		$result = $member->children( 'omso', true )->children( 'om', true )->result;
@@ -606,18 +606,18 @@ function print_forecast() {
 			if ( 'mts-1-1-Precipitation1h' === $value ) {
 				$precipitations = object_to_array( $points->children( 'wml2', true ) );
 				foreach ( $precipitations->point as $index => $point ) {
-					$point_time = strtotime( $point->MeasurementTVP->time );
+					$point_time                            = strtotime( $point->MeasurementTVP->time );
 					$precipitation_forecast[ $point_time ] = $point->MeasurementTVP->value;
-					//$precipitation_forecast[ $index ]['time'] = $point_time;
-					//$precipitation_forecast[ $index ]['precipitation'] = $point->MeasurementTVP->value;
+					// $precipitation_forecast[ $index ]['time'] = $point_time;
+					// $precipitation_forecast[ $index ]['precipitation'] = $point->MeasurementTVP->value;
 				}
 			}
 		}
 	}
 
-	$print_weekday = false;
-	$every_other_weekday = false;
-	$day_counter = 1;
+	$print_weekday        = false;
+	$every_other_weekday  = false;
+	$day_counter          = 1;
 	$forecast_data_points = 20;
 
 	$output .= '<div id="forecast" class="padded">';
@@ -637,20 +637,20 @@ function print_forecast() {
 		}
 
 		// Skip late hours just until the late night
-		if( (int) date( 'H', time() ) < 22 && (int) date( 'H', $data_point['time'] ) > 22 ) {
+		if ( (int) date( 'H', time() ) < 22 && (int) date( 'H', $data_point['time'] ) > 22 ) {
 			continue;
 		}
 
 		if ( date( 'H', $data_point['time'] ) < $previous_data_point_hour ) {
-			$every_other_weekday = !$every_other_weekday;
-			$print_weekday = true;
+			$every_other_weekday = ! $every_other_weekday;
+			$print_weekday       = true;
 		}
 
 		$previous_data_point_hour = date( 'H', $data_point['time'] );
 
 		$output .= '<div class="forecast__data-point near-future';
 
-		if( $every_other_weekday ) {
+		if ( $every_other_weekday ) {
 			$output .= ' colored-bg';
 		}
 
@@ -658,7 +658,7 @@ function print_forecast() {
 
 		if ( $print_weekday || 0 === $index ) {
 			$output .= '<span class="forecast__data-point--weekday">' . $weekday_names[ date( 'D', $data_point['time'] ) ] . '</span>';
-			if( 0 !== $index ) {
+			if ( 0 !== $index ) {
 				$day_counter++;
 			}
 			$print_weekday = false;
@@ -666,7 +666,7 @@ function print_forecast() {
 
 		$output .= '<span class="forecast__data-point--hour">' . date( 'H', $data_point['time'] ) . '</span>';
 
-		$sunrise = date_sunrise( strtotime( 'tomorrow' ) , SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
+		$sunrise = date_sunrise( strtotime( 'tomorrow' ), SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
 		$sunset  = date_sunset( time(), SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
 
 		$symbol_number = (int) $data_point['symbol'];
@@ -688,20 +688,19 @@ function print_forecast() {
 
 		$precipitation_value = $precipitation_forecast[ $data_point['time'] ];
 
-		if( false === is_numeric( $precipitation_value ) || $precipitation_value <= 0 ) {
+		if ( false === is_numeric( $precipitation_value ) || $precipitation_value <= 0 ) {
 			$precipitation_value = 0;
 		}
 
 		$output .= '<td class="forecast__data-point--hmdy-bar" data-precipitation-value="' . $precipitation_value . '">';
 
-		if( $precipitation_value > 0 ) {
+		if ( $precipitation_value > 0 ) {
 			$output .= '<div style="height:' . netatmo_calculate_precipitation_graph_height( $precipitation_value ) . 'px;"></div>';
 		} else {
 			$output .= '<div class="forecast__data-point--hmdy-bar__null"></div>';
 		}
 
 		$output .= '</td>';
-
 
 		$output .= '</tr></tbody></table>';
 		$output .= '<span class="forecast__data-point--hmdy-value" data-precipitation-subtotal="' . $precipitation_value . '">' . $precipitation_value . '</span>';
@@ -723,28 +722,28 @@ function print_forecast() {
 			continue;
 		}
 
-		if( date( 'H', time() ) > 21 ) {
+		if ( date( 'H', time() ) > 21 ) {
 			$start_hour = 7;
-			$end_hour = 21;
+			$end_hour   = 21;
 		} else {
 			$start_hour = 7;
-			$end_hour = 21;
+			$end_hour   = 21;
 		}
 
-		if( (int) date( 'H', $data_point['time'] ) < $start_hour || (int) date( 'H', $data_point['time'] ) > $end_hour ) {
+		if ( (int) date( 'H', $data_point['time'] ) < $start_hour || (int) date( 'H', $data_point['time'] ) > $end_hour ) {
 			continue;
 		}
 
 		if ( date( 'H', $data_point['time'] ) < $previous_data_point_hour ) {
-			$every_other_weekday = !$every_other_weekday;
-			$print_weekday = true;
+			$every_other_weekday = ! $every_other_weekday;
+			$print_weekday       = true;
 		}
 
 		$previous_data_point_hour = date( 'H', $data_point['time'] );
 
 		$output .= '<div class="forecast__data-point far-future';
 
-		if( $every_other_weekday ) {
+		if ( $every_other_weekday ) {
 			$output .= ' colored-bg';
 		}
 
@@ -752,7 +751,7 @@ function print_forecast() {
 
 		if ( $print_weekday || 0 === $index ) {
 			$output .= '<span class="forecast__data-point--weekday">' . $weekday_names[ date( 'D', $data_point['time'] ) ] . '</span>';
-			if( 0 !== $index ) {
+			if ( 0 !== $index ) {
 				$day_counter++;
 			}
 			$print_weekday = false;
@@ -760,12 +759,12 @@ function print_forecast() {
 
 		$output .= '<span class="forecast__data-point--hour">' . date( 'H', $data_point['time'] ) . '</span>';
 
-		$sunset  = date_sunset( $data_point['time'], SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
+		$sunset = date_sunset( $data_point['time'], SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
 
-		if( $data_point['time'] > $sunset ) {
-			$sunrise = date_sunrise( strtotime( 'tomorrow' ) , SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
+		if ( $data_point['time'] > $sunset ) {
+			$sunrise = date_sunrise( strtotime( 'tomorrow' ), SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
 		} else {
-			$sunrise = date_sunrise( $data_point['time'] , SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
+			$sunrise = date_sunrise( $data_point['time'], SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
 		}
 
 		$symbol_number = (int) $data_point['symbol'];
@@ -787,10 +786,10 @@ function print_forecast() {
 
 		$precipitation_subtotal = 0;
 
-		for( $i = 0; $i < $future_timestep_hours; $i++ ) {
+		for ( $i = 0; $i < $future_timestep_hours; $i++ ) {
 			$precipitation_value = $precipitation_forecast[ $data_point['time'] + $i * HOUR_IN_SECONDS ];
 
-			if( is_numeric( $precipitation_value ) ) {
+			if ( is_numeric( $precipitation_value ) ) {
 				$precipitation_subtotal = $precipitation_subtotal + $precipitation_value;
 			} else {
 				$precipitation_value = 0;
@@ -815,7 +814,6 @@ function print_forecast() {
 		$forecast_data_points--;
 	}
 
-
 	$output .= '</div>';
 	return $output;
 }
@@ -832,35 +830,35 @@ function object_to_array( $object ) {
 	return $array;
 }
 
-/**
- * Mikrogramma Debug function prints any variable or array
- */
+	/**
+	 * Mikrogramma Debug function prints any variable or array
+	 */
 //phpcs:disable
 function mikrogramma_debug( $var, $return = false, $write_to_log = false ) {
-	$output = '';
+		$output = '';
 
-	$el_start = '<pre style="font-size: 12px; color: #222222; background-color: #fafafa; padding: 5px; margin: 5px; border: 1px solid #cccccc; position: relative; z-index: 9999; overflow: auto; text-align: left;">';
-	$el_end   = '</pre>' . PHP_EOL;
+		$el_start = '<pre style="font-size: 12px; color: #222222; background-color: #fafafa; padding: 5px; margin: 5px; border: 1px solid #cccccc; position: relative; z-index: 9999; overflow: auto; text-align: left;">';
+		$el_end   = '</pre>' . PHP_EOL;
 
 
-	if ( isset( $var ) && ! empty( $var ) ) {
+		if ( isset( $var ) && ! empty( $var ) ) {
 		$output .= $el_start;
 		$output .= print_r( $var, true );
 		$output .= $el_end;
-	} elseif ( empty( $var ) ) {
-		$output .= $el_start . 'Variable is empty.' . $el_end;
-	} else {
-		$output .= $el_start . 'Variable not defined.' . $el_end;
-	}
+			} elseif ( empty( $var ) ) {
+	$output .= $el_start . 'Variable is empty.' . $el_end;
+			} else {
+	$output .= $el_start . 'Variable not defined.' . $el_end;
+			}
 
-	if ( $write_to_log ) {
-		error_log( print_r( $var, true ) );
-	}
+		if ( $write_to_log ) {
+	error_log( print_r( $var, true ) );
+			}
 
-	if ( $return ) {
-		return $output;
-	} else {
-		echo $output;
-	}
+		if ( $return ) {
+	return $output;
+			} else {
+	echo $output;
+			}
 }
 //phpcs:enable

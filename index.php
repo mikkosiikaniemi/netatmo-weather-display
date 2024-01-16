@@ -8,6 +8,8 @@
  * @link https://github.com/mikkosiikaniemi/netatmo-weather-display
  */
 
+require 'vendor/autoload.php';
+
 // Start a PHP session to store the Netatmo API access token and such.
 session_start();
 
@@ -28,13 +30,21 @@ if ( isset( $_POST['logout'] ) ) {
 	logout_netatmo();
 }
 
+global $provider;
+
+$provider = new \Rugaard\OAuth2\Client\Netatmo\Provider\Netatmo([
+	'clientId'          => CLIENT_ID,
+	'clientSecret'      => CLIENT_SECRET,
+	'redirectUri'       => LOCAL_URL
+]);
+
+
 // If there is no authorization code from Netatmo, or if the session has not been started
 if ( ! isset( $_GET['code'] ) || ! isset( $_SESSION ) ) {
-//if ( ! isset( $_SESSION['state'] ) ) {
 	login_netatmo();
 }
 
-if ( isset( $_SESSION['state'] ) ) {//&& ( $_SESSION['state'] === $_GET['state'] ) ) {
+if ( isset( $_SESSION['state'] ) ) {
 
 	if ( ! isset( $_SESSION['access_token'] ) ) {
 		get_access_token();
