@@ -56,11 +56,11 @@ function ug_file_get_contents( $url ) {
  */
 function print_temperatures() {
 
-	if ( $_SESSION[ 'expires_in' ] < time() ) {
+	if ( $_SESSION['expires_in'] < time() ) {
 		refresh_token();
 	}
 
-	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token=' . $_SESSION[ 'access_token' ];
+	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token=' . $_SESSION['access_token'];
 
 	$remote_data = ug_file_get_contents( $api_url );
 
@@ -343,10 +343,10 @@ function get_access_token() {
 	// We have an access token, which we may use in authenticated
 	// requests against the service provider's API.
 	// Save tokens to session data.
-	$_SESSION[ 'access_token' ] = $accessToken->getToken();
-	$_SESSION[ 'refresh_token' ] = $accessToken->getRefreshToken();
-	$_SESSION[ 'expires_in' ] = $accessToken->getExpires();
-	$_SESSION[ 'expired' ] = $accessToken->hasExpired();
+	$_SESSION['access_token']  = $accessToken->getToken();
+	$_SESSION['refresh_token'] = $accessToken->getRefreshToken();
+	$_SESSION['expires_in']    = $accessToken->getExpires();
+	$_SESSION['expired']       = $accessToken->hasExpired();
 }
 
 /**
@@ -359,15 +359,15 @@ function refresh_token() {
 	$newAccessToken = $provider->getAccessToken(
 		'refresh_token',
 		array(
-			'refresh_token' => $_SESSION[ 'refresh_token' ],
+			'refresh_token' => $_SESSION['refresh_token'],
 		)
 	);
 
 	// Save tokens to session data.
-	$_SESSION[ 'access_token' ] = $newAccessToken->getToken();
-	$_SESSION[ 'refresh_token' ] = $newAccessToken->getRefreshToken();
-	$_SESSION[ 'expires_in' ] = $newAccessToken->getExpires();
-	$_SESSION[ 'expired' ] = $newAccessToken->hasExpired();
+	$_SESSION['access_token']  = $newAccessToken->getToken();
+	$_SESSION['refresh_token'] = $newAccessToken->getRefreshToken();
+	$_SESSION['expires_in']    = $newAccessToken->getExpires();
+	$_SESSION['expired']       = $newAccessToken->hasExpired();
 }
 
 /**
@@ -384,8 +384,8 @@ function login_netatmo() {
 	global $provider;
 
 	// Already logged in?
-	if( isset( $_GET['code'] ) && isset( $_GET['state'] ) ) {
-		//return;
+	if ( isset( $_GET['code'] ) && isset( $_GET['state'] ) ) {
+		// return;
 	}
 
 	if ( ! isset( $_GET['code'] ) ) {
@@ -666,15 +666,17 @@ function print_forecast() {
 
 		$output .= '<span class="forecast__data-point--hour">' . date( 'H', $data_point['time'] ) . '</span>';
 
-		$sunrise = date_sunrise( strtotime( 'tomorrow' ), SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
-		$sunset  = date_sunset( time(), SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
+		$sun_info_today    = date_sun_info( time(), LATITUDE, LONGITUDE );
+		$sun_info_tomorrow = date_sun_info( time(), LATITUDE, LONGITUDE );
+		$sunrise_tomorrow  = $sun_info_tomorrow['sunrise'];
+		$sunset_today      = $sun_info_today['sunset'];
 
 		$symbol_number = (int) $data_point['symbol'];
 		if ( array_key_exists( $symbol_number, $fmi_weather_symbols ) ) {
 			$symbol_number = $fmi_weather_symbols[ $symbol_number ];
 		}
 
-		if ( $data_point['time'] > $sunset && $data_point['time'] < $sunrise ) {
+		if ( $data_point['time'] > $sunset_today && $data_point['time'] < $sunrise_tomorrow ) {
 			$symbol_number = $symbol_number + 100;
 		}
 
@@ -759,12 +761,13 @@ function print_forecast() {
 
 		$output .= '<span class="forecast__data-point--hour">' . date( 'H', $data_point['time'] ) . '</span>';
 
-		$sunset = date_sunset( $data_point['time'], SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
+		$sun_info_datapoint = date_sun_info( $data_point['time'], LATITUDE, LONGITUDE );
+		$sunset_datapoint   = $sun_info_datapoint['sunset'];
 
-		if ( $data_point['time'] > $sunset ) {
-			$sunrise = date_sunrise( strtotime( 'tomorrow' ), SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
+		if ( $data_point['time'] > $sunset_datapoint ) {
+			$sunrise = $sunrise_tomorrow;
 		} else {
-			$sunrise = date_sunrise( $data_point['time'], SUNFUNCS_RET_TIMESTAMP, 62.7594, 22.8683, 90.5 );
+			$sunrise = $sun_info_datapoint['sunrise'];
 		}
 
 		$symbol_number = (int) $data_point['symbol'];
@@ -772,7 +775,7 @@ function print_forecast() {
 			$symbol_number = $fmi_weather_symbols[ $symbol_number ];
 		}
 
-		if ( $data_point['time'] > $sunset || $data_point['time'] < $sunrise ) {
+		if ( $data_point['time'] > $sunset_datapoint || $data_point['time'] < $sunrise ) {
 			$symbol_number = $symbol_number + 100;
 		}
 

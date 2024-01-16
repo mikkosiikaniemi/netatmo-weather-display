@@ -90,8 +90,9 @@ if ( isset( $_SESSION['state'] ) ) {
 
 	<div class="sunrise-sunset">
 		<?php
-			$sunrise = date_sunrise( time(), SUNFUNCS_RET_TIMESTAMP, LATITUDE, LONGITUDE, 90 );
-			$sunset  = date_sunset( time(), SUNFUNCS_RET_TIMESTAMP, LATITUDE, LONGITUDE, 90 );
+			$sun_info = date_sun_info( time(), LATITUDE, LONGITUDE );
+			$sunrise = $sun_info['sunrise'];
+			$sunset  = $sun_info['sunset'];
 			$sunrise_minutes = date( 'H', $sunrise ) * 60 + date( 'i', $sunrise );
 			$sunset_minutes = date( 'H', $sunset ) * 60 + date( 'i', $sunset );
 			$sunrise_percent = round( ( $sunrise_minutes / ( 24 * 60 ) ) * 100, 2 );
