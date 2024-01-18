@@ -23,35 +23,6 @@ define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
 DEFINE( 'NETATMO_UPDATE_INTERVAL', 11 * MINUTE_IN_SECONDS );
 
 /**
- * Drop-in replacement for PHP's "file_get_contents", as "allow_url_fopen"
- * is not allowed at Opalstack.
- */
-function ug_file_get_contents( $url ) {
-
-	if ( ! function_exists( 'curl_init' ) ) {
-		die( 'CURL is not installed!' );
-	}
-	$ch = curl_init();
-
-	if ( $ch === false ) {
-		throw new Exception( 'failed to initialize' );
-	}
-
-	curl_setopt( $ch, CURLOPT_URL, $url );
-	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-
-	$output = curl_exec( $ch );
-
-	// Check the return value of curl_exec(), too.
-	if ( $output === false ) {
-		throw new Exception( curl_error( $ch ), curl_errno( $ch ) );
-	}
-
-	curl_close( $ch );
-	return $output;
-}
-
-/**
  * Print temperatures for all modules
  */
 function print_temperatures() {
@@ -62,7 +33,7 @@ function print_temperatures() {
 
 	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token=' . $_SESSION['access_token'];
 
-	$remote_data = ug_file_get_contents( $api_url );
+	$remote_data = file_get_contents( $api_url );
 
 	if ( false === $remote_data ) {
 		throw new Exception( 'Failed to get station data.' );
@@ -214,7 +185,7 @@ function get_module_info( $module, $rain_module = false ) {
 	);
 
 	$module_api_url      = 'https://api.netatmo.com/api/getmeasure?' . $recent_history_query;
-	$module_history      = ug_file_get_contents( $module_api_url );
+	$module_history      = file_get_contents( $module_api_url );
 	$module_history_json = json_decode( $module_history );
 
 	$recent_temperatures  = array();
@@ -287,7 +258,7 @@ function get_module_info( $module, $rain_module = false ) {
 			);
 
 			$module_api_url      = 'https://api.netatmo.com/api/getmeasure?' . $rain_query;
-			$module_history      = ug_file_get_contents( $module_api_url );
+			$module_history      = file_get_contents( $module_api_url );
 			$module_history_json = json_decode( $module_history );
 			$rain_data_points    = array();
 
@@ -354,7 +325,13 @@ function get_access_token() {
  */
 function refresh_token() {
 
-	global $provider;
+	$provider = new \Rugaard\OAuth2\Client\Netatmo\Provider\Netatmo(
+		array(
+			'clientId'     => CLIENT_ID,
+			'clientSecret' => CLIENT_SECRET,
+			'redirectUri'  => LOCAL_URL,
+		)
+	);
 
 	$newAccessToken = $provider->getAccessToken(
 		'refresh_token',
@@ -508,9 +485,9 @@ function print_forecast() {
 		$today_timestep_hours = 1;
 	}
 
-	$today_forecast_url = 'https://opendata.fmi.fi/wfs?request=getFeature&starttime=' . $today_start_time . 'Z&endtime=' . $today_end_time . 'Z&latlon=' . LATITUDE . ',' . LONGITUDE . '&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Temperature,WeatherSymbol3&timestep=' . $today_timestep_hours * 60;
+	$today_forecast_url = 'https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&starttime=' . $today_start_time . 'Z&endtime=' . $today_end_time . 'Z&latlon=' . LATITUDE . ',' . LONGITUDE . '&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Temperature,WeatherSymbol3&timestep=' . $today_timestep_hours * 60;
 
-	$today_forecast_raw = ug_file_get_contents( $today_forecast_url );
+	$today_forecast_raw = file_get_contents( $today_forecast_url );
 	$today_forecast_xml = simplexml_load_string( $today_forecast_raw );
 
 	$temperatures = array();
@@ -552,9 +529,9 @@ function print_forecast() {
 	$future_end_time       = date( 'Y-m-d\TH:i:s', time() - date( 'Z' ) + 66 * HOUR_IN_SECONDS );
 	$future_timestep_hours = 2;
 
-	$future_forecast_url = 'https://opendata.fmi.fi/wfs?request=getFeature&starttime=' . $future_start_time . 'Z&endtime=' . $future_end_time . 'Z&latlon=62.7594,22.8683&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Temperature,WeatherSymbol3&timestep=' . $future_timestep_hours * 60;
+	$future_forecast_url = 'https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&starttime=' . $future_start_time . 'Z&endtime=' . $future_end_time . 'Z&latlon=' . LATITUDE . ',' . LONGITUDE . '&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Temperature,WeatherSymbol3&timestep=' . $future_timestep_hours * 60;
 
-	$future_forecast_raw = ug_file_get_contents( $future_forecast_url );
+	$future_forecast_raw = file_get_contents( $future_forecast_url );
 	$future_forecast_xml = simplexml_load_string( $future_forecast_raw );
 	$future_forecast     = array();
 
@@ -588,9 +565,9 @@ function print_forecast() {
 		$precipitation_start_time = $future_start_time;
 	}
 
-	$precipitation_forecast_url = 'https://opendata.fmi.fi/wfs?request=getFeature&starttime=' . $precipitation_start_time . '&endtime=' . $future_end_time . '&latlon=62.7594,22.8683&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Precipitation1h&timestep=60';
+	$precipitation_forecast_url = 'https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&starttime=' . $precipitation_start_time . '&endtime=' . $future_end_time . '&latlon=' . LATITUDE . ',' . LONGITUDE . '&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Precipitation1h&timestep=60';
 
-	$precipitation_forecast_raw = ug_file_get_contents( $precipitation_forecast_url );
+	$precipitation_forecast_raw = file_get_contents( $precipitation_forecast_url );
 	$precipitation_forecast_xml = simplexml_load_string( $precipitation_forecast_raw );
 	$precipitation_members      = $precipitation_forecast_xml->children( 'wfs', true );
 	$precipitation_forecast     = array();
@@ -833,35 +810,34 @@ function object_to_array( $object ) {
 	return $array;
 }
 
-	/**
-	 * Mikrogramma Debug function prints any variable or array
-	 */
+/**
+ * Mikrogramma Debug function prints any variable or array
+ */
 //phpcs:disable
 function mikrogramma_debug( $var, $return = false, $write_to_log = false ) {
-		$output = '';
+	$output = '';
 
-		$el_start = '<pre style="font-size: 12px; color: #222222; background-color: #fafafa; padding: 5px; margin: 5px; border: 1px solid #cccccc; position: relative; z-index: 9999; overflow: auto; text-align: left;">';
-		$el_end   = '</pre>' . PHP_EOL;
+	$el_start = '<pre style="font-size: 12px; color: #222222; background-color: #fafafa; padding: 5px; margin: 5px; border: 1px solid #cccccc; position: relative; z-index: 9999; overflow: auto; text-align: left;">';
+	$el_end   = '</pre>' . PHP_EOL;
 
-
-		if ( isset( $var ) && ! empty( $var ) ) {
+	if ( isset( $var ) && ! empty( $var ) ) {
 		$output .= $el_start;
 		$output .= print_r( $var, true );
 		$output .= $el_end;
-			} elseif ( empty( $var ) ) {
-	$output .= $el_start . 'Variable is empty.' . $el_end;
-			} else {
-	$output .= $el_start . 'Variable not defined.' . $el_end;
-			}
+	} elseif ( empty( $var ) ) {
+		$output .= $el_start . 'Variable is empty.' . $el_end;
+	} else {
+		$output .= $el_start . 'Variable not defined.' . $el_end;
+	}
 
-		if ( $write_to_log ) {
-	error_log( print_r( $var, true ) );
-			}
+	if ( $write_to_log ) {
+		error_log( print_r( $var, true ) );
+	}
 
-		if ( $return ) {
-	return $output;
-			} else {
-	echo $output;
-			}
+	if ( $return ) {
+		return $output;
+	} else {
+		echo $output;
+	}
 }
 //phpcs:enable

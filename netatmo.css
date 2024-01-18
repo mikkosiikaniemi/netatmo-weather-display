@@ -138,6 +138,7 @@ p {
 
 .time {
 	float: right;
+	font-variant-numeric: tabular-nums;
 }
 
 .modules {
