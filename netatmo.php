@@ -1,5 +1,7 @@
 <?php
 
+require 'vendor/autoload.php';
+
 // Resume PHP session
 if ( ! isset( $_SESSION ) ) {
 	session_start();
@@ -41,7 +43,7 @@ function print_temperatures() {
 
 	$stations = json_decode( $remote_data );
 
-	if ( null !== $stations ) {
+	if ( isset( $stations ) && null !== $stations ) {
 
 		$output = '';
 		// Take only the first station's info
@@ -75,9 +77,9 @@ function print_temperatures() {
 		$output .= '</div>';
 
 		// $output .= '<p class="data-time">Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
-		// $output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['token_expires'] ) . '.</p>';
+		// $output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['expires_in'] ) . '.</p>';
 
-		$output .= print_forecast();
+		$output .= print_yr_forecast();
 
 		return $output;
 	} else {
@@ -444,24 +446,105 @@ function human_time_difference( $timestamp ) {
 	return floor( $seconds ) . ' sekuntia';
 }
 
-	/**
-	 * Get weather forecast info from Ilmatieteenlaitos.
-	 */
-function print_forecast() {
+/**
+ * Get weather forecast from YR.no.
+ * @see https://developer.yr.no/doc/GettingStarted/
+ */
+function get_yr_data() {
+
+	// Initialize empty array for storing the forecast data to be returned.
+	$forecast_json = array();
+
+	// Define the YR.no URL.
+	$yr_url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?altitude=' . ALTITUDE . '&lat='. LATITUDE. '&lon='. LONGITUDE;
+
+	// Define User-Agent header for HTTP request as instructed by YR.
+	$options = array(
+		'http' => array(
+			'user_agent' => 'netatmo-weather-display/1.1 github.com/mikkosiikaniemi/netatmo-weather-display'
+		)
+	);
+
+	$context = stream_context_create( $options );
+
+	// Just get the headers from YR to decice if it's ok to fetch data again.
+	$yr_headers = get_headers( $yr_url, true, $context );
+
+	// If YR 'Expires' header is in the past, get new fresh data. Store in session.
+	if ( strtotime( $yr_headers['Expires'] ) < time() ) {
+		$forecast_json = file_get_contents( 'https://api.met.no/weatherapi/locationforecast/2.0/compact?altitude=60&lat='. LATITUDE. '&lon='. LONGITUDE, false, $context );
+		$_SESSION['forecast'] = $forecast_json;
+		$_SESSION['forecast_expires'] = strtotime( $yr_headers['Expires'] );
+	} else {
+		// Otherwise, use data stored in session.
+		$forecast_json = $_SESSION['forecast'];
+	}
+
+	return $forecast_json;
+}
+
+/**
+ * Render weather forecast from YR.no.
+ */
+function print_yr_forecast() {
+
 	$output = '';
 
-	$fmi_weather_symbols = array(
-		3  => 7,
-		22 => 32,
-		23 => 33,
-		31 => 37,
-		32 => 38,
-		33 => 39,
-		63 => 77,
-		81 => 47,
-		82 => 48,
-		83 => 49,
-	);
+	// Get YR.no forecast data.
+	$forecast_json = get_yr_data();
+
+	// Decode the JSON.
+	$forecast_decoded = json_decode( $forecast_json, true );
+
+	// Get the right element from JSON.
+	$time_series = $forecast_decoded['properties']['timeseries'];
+
+	// Initialize empty array for forecast data to be processed.
+	$forecast_data = array();
+
+	// Loop through forecast data points.
+	foreach ( $time_series as $index => $data ) {
+
+		$datapoint_timestamp = strtotime( $data['time'] );
+		$datapoint_human = date( 'j.n.Y H:i', strtotime( $data['time'] ) );
+
+		// Only process the next three days worth of data points.
+		if ( $datapoint_timestamp > strtotime('+3 day') ) {
+			continue;
+		}
+
+		// Skip the data point if it's in the past.
+		if ( $datapoint_timestamp < time() ) {
+			continue;
+		}
+
+		/**
+		 * Define default scope for forecast. Data returned by YR has built-in
+		 * support for 1-hour, 6-hour and 12-hour steps.
+		 */
+		$forecast_scope = 'next_1_hours';
+
+		if ( $datapoint_timestamp >= strtotime( 'tomorrow' ) ) {
+
+			//For tomorrow's forecast and further, use 6-hour steps.
+			$forecast_scope = 'next_6_hours';
+
+			// Skip other than 6-hour stepped future data points.
+			if ( false === in_array( (int) date( 'H', $datapoint_timestamp ), array( 2, 8, 14, 20 ) ) ) {
+				continue;
+			}
+		}
+
+		// Process and store the relevant data point measurements.
+		$forecast_data[ $index ]['time'] = $datapoint_timestamp;
+		$forecast_data[ $index ]['human_time'] = date( 'j.n.Y H:i', $datapoint_timestamp );
+		$forecast_data[ $index ]['temp'] = $data['data']['instant']['details']['air_temperature'];
+
+		if ( isset( $data['data'][ $forecast_scope ] ) ) {
+			$forecast_data[ $index ]['symbol'] = $data['data'][ $forecast_scope ]['summary']['symbol_code'];
+			$forecast_data[ $index ]['precipitation'] = number_format( $data['data'][ $forecast_scope ]['details']['precipitation_amount'], 2 );
+		}
+	}
 
 	$weekday_names = array(
 		'Mon' => 'Ma',
@@ -473,147 +556,39 @@ function print_forecast() {
 		'Sun' => 'Su',
 	);
 
-	// Get today's forecast, but only if there are hours left in this day
-	$today_forecast = array();
-	if ( strtotime( 'tomorrow' ) < time() + HOUR_IN_SECONDS ) {
-		$today_start_time     = date( 'Y-m-d\TH:i:s', strtotime( 'tomorrow' ) - date( 'Z' ) );
-		$today_end_time       = date( 'Y-m-d\TH:i:s', strtotime( 'tomorrow 23:00' ) - date( 'Z' ) );
-		$today_timestep_hours = 2;
-	} else {
-		$today_start_time     = date( 'Y-m-d\TH:i:s', time() - date( 'Z' ) );
-		$today_end_time       = date( 'Y-m-d\TH:i:s', strtotime( 'tomorrow' ) - HOUR_IN_SECONDS - date( 'Z' ) );
-		$today_timestep_hours = 1;
-	}
+	// Map weather symbol names to SVG files. See subdir ./svg for numbers.
+	$weather_symbols = array(
+		'fair_day'           => 2,
+		'partlycloudy_day'   => 4,
+		'cloudy'             => 7,
+		'lightrain'          => 37,
+		'rain'               => 38,
+		'lightsleet'         => 47,
+		'sleet'              => 48,
+		'heavysleet'         => 49,
+		'snow'               => 58,
+		'clearsky_night'     => 101,
+		'partlycloudy_night' => 104,
+		'fog'                => 109,
+	);
 
-	$today_forecast_url = 'https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&starttime=' . $today_start_time . 'Z&endtime=' . $today_end_time . 'Z&latlon=' . LATITUDE . ',' . LONGITUDE . '&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Temperature,WeatherSymbol3&timestep=' . $today_timestep_hours * 60;
-
-	$today_forecast_raw = file_get_contents( $today_forecast_url );
-	$today_forecast_xml = simplexml_load_string( $today_forecast_raw );
-
-	$temperatures = array();
-	$symbols      = array();
-
-	$today_members = $today_forecast_xml->children( 'wfs', true );
-
-	$precipitation_start_time = null;
-
-	foreach ( $today_members as $member ) {
-		$result = $member->children( 'omso', true )->children( 'om', true )->result;
-		$points = $result->children( 'wml2', true );
-
-		// Get element attributes to map temperatures to weather symbols
-		foreach ( $points[0]->attributes( 'gml', true ) as $value ) {
-			$value = (string) $value[0];
-			if ( 'mts-1-1-Temperature' === $value ) {
-				$temperatures = object_to_array( $points->children( 'wml2', true ) );
-				foreach ( $temperatures->point as $index => $point ) {
-					$point_time = strtotime( $point->MeasurementTVP->time );
-
-					if ( $index === 0 ) {
-						$precipitation_start_time = $point->MeasurementTVP->time;
-					}
-
-					$today_forecast[ $index ]['time'] = $point_time;
-					$today_forecast[ $index ]['temp'] = $point->MeasurementTVP->value;
-				}
-			} elseif ( 'mts-1-1-WeatherSymbol3' === $value ) {
-				$symbols = object_to_array( $points->children( 'wml2', true ) );
-				foreach ( $symbols->point as $index => $point ) {
-					$today_forecast[ $index ]['symbol'] = $point->MeasurementTVP->value;
-				}
-			}
-		}
-	}
-
-	$future_start_time     = date( 'Y-m-d\TH:i:s', strtotime( $today_end_time ) );
-	$future_end_time       = date( 'Y-m-d\TH:i:s', time() - date( 'Z' ) + 66 * HOUR_IN_SECONDS );
-	$future_timestep_hours = 2;
-
-	$future_forecast_url = 'https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&starttime=' . $future_start_time . 'Z&endtime=' . $future_end_time . 'Z&latlon=' . LATITUDE . ',' . LONGITUDE . '&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Temperature,WeatherSymbol3&timestep=' . $future_timestep_hours * 60;
-
-	$future_forecast_raw = file_get_contents( $future_forecast_url );
-	$future_forecast_xml = simplexml_load_string( $future_forecast_raw );
-	$future_forecast     = array();
-
-	$future_members = $future_forecast_xml->children( 'wfs', true );
-
-	foreach ( $future_members as $member ) {
-		$result = $member->children( 'omso', true )->children( 'om', true )->result;
-		$points = $result->children( 'wml2', true );
-
-		// Get element attributes to map temperatures to weather symbols
-		foreach ( $points[0]->attributes( 'gml', true ) as $value ) {
-			$value = (string) $value[0];
-			if ( 'mts-1-1-Temperature' === $value ) {
-				$temperatures = object_to_array( $points->children( 'wml2', true ) );
-				foreach ( $temperatures->point as $index => $point ) {
-					$point_time = strtotime( $point->MeasurementTVP->time );
-
-					$future_forecast[ $index ]['time'] = $point_time;
-					$future_forecast[ $index ]['temp'] = $point->MeasurementTVP->value;
-				}
-			} elseif ( 'mts-1-1-WeatherSymbol3' === $value ) {
-				$symbols = object_to_array( $points->children( 'wml2', true ) );
-				foreach ( $symbols->point as $index => $point ) {
-					$future_forecast[ $index ]['symbol'] = $point->MeasurementTVP->value;
-				}
-			}
-		}
-	}
-
-	if ( ! isset( $precipitation_start_time ) ) {
-		$precipitation_start_time = $future_start_time;
-	}
-
-	$precipitation_forecast_url = 'https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&starttime=' . $precipitation_start_time . '&endtime=' . $future_end_time . '&latlon=' . LATITUDE . ',' . LONGITUDE . '&storedquery_id=fmi::forecast::harmonie::surface::point::timevaluepair&parameters=Precipitation1h&timestep=60';
-
-	$precipitation_forecast_raw = file_get_contents( $precipitation_forecast_url );
-	$precipitation_forecast_xml = simplexml_load_string( $precipitation_forecast_raw );
-	$precipitation_members      = $precipitation_forecast_xml->children( 'wfs', true );
-	$precipitation_forecast     = array();
-	$precipitations             = array();
-
-	foreach ( $precipitation_members as $member ) {
-		$result = $member->children( 'omso', true )->children( 'om', true )->result;
-		$points = $result->children( 'wml2', true );
-
-		// Get element attributes to map temperatures to weather symbols
-		foreach ( $points[0]->attributes( 'gml', true ) as $value ) {
-			$value = (string) $value[0];
-			if ( 'mts-1-1-Precipitation1h' === $value ) {
-				$precipitations = object_to_array( $points->children( 'wml2', true ) );
-				foreach ( $precipitations->point as $index => $point ) {
-					$point_time                            = strtotime( $point->MeasurementTVP->time );
-					$precipitation_forecast[ $point_time ] = $point->MeasurementTVP->value;
-					// $precipitation_forecast[ $index ]['time'] = $point_time;
-					// $precipitation_forecast[ $index ]['precipitation'] = $point->MeasurementTVP->value;
-				}
-			}
-		}
-	}
 
 	$print_weekday        = false;
 	$every_other_weekday  = false;
 	$day_counter          = 1;
 	$forecast_data_points = 20;
+	$previous_data_point_hour = date( 'H', time() );
 
 	$output .= '<div id="forecast" class="padded">';
 
-	$previous_data_point_hour = date( 'H', time() );
+	foreach ( $forecast_data as $index => $data_point ) {
 
-	foreach ( $today_forecast as $index => $data_point ) {
-
-		// Print only defined amount of data points at maximum
+		// Print only defined amount of data points at maximum.
 		if ( $forecast_data_points <= 0 ) {
 			continue;
 		}
 
-		// If weather forecast data point does not contain weather symbol, return early.
-		if ( ! is_numeric( $data_point['symbol'] ) ) {
-			continue;
-		}
-
-		// Skip late hours just until the late night
+		// Skip today's forecast late hours.
 		if ( (int) date( 'H', time() ) < 22 && (int) date( 'H', $data_point['time'] ) > 22 ) {
 			continue;
 		}
@@ -633,7 +608,7 @@ function print_forecast() {
 
 		$output .= '" data-time="' . $data_point['time'] . '">';
 
-		if ( $print_weekday || 0 === $index ) {
+		if ( $print_weekday || array_key_first( $forecast_data ) === $index ) {
 			$output .= '<span class="forecast__data-point--weekday">' . $weekday_names[ date( 'D', $data_point['time'] ) ] . '</span>';
 			if ( 0 !== $index ) {
 				$day_counter++;
@@ -643,29 +618,15 @@ function print_forecast() {
 
 		$output .= '<span class="forecast__data-point--hour">' . date( 'H', $data_point['time'] ) . '</span>';
 
-		$sun_info_today    = date_sun_info( time(), LATITUDE, LONGITUDE );
-		$sun_info_tomorrow = date_sun_info( time(), LATITUDE, LONGITUDE );
-		$sunrise_tomorrow  = $sun_info_tomorrow['sunrise'];
-		$sunset_today      = $sun_info_today['sunset'];
-
-		$symbol_number = (int) $data_point['symbol'];
-		if ( array_key_exists( $symbol_number, $fmi_weather_symbols ) ) {
-			$symbol_number = $fmi_weather_symbols[ $symbol_number ];
-		}
-
-		if ( $data_point['time'] > $sunset_today && $data_point['time'] < $sunrise_tomorrow ) {
-			$symbol_number = $symbol_number + 100;
-		}
-
 		$output .= '<svg class="weather-symbol symbol-' . $data_point['symbol'] . '">';
-		$output .= '<use xlink:href="#' . $symbol_number . '" /></svg>';
+		$output .= '<use xlink:href="#' . $weather_symbols[ $data_point['symbol'] ] . '" /></svg>';
 
 		$output .= '<span class="forecast__data-point--temp">' . round( $data_point['temp'] ) . '</span><span class="forecast__data-point--celcius">°</span>';
 
-		// Precipitation output
+		// Precipitation output.
 		$output .= '<table class="forecast__data-point--hmdy"><tbody><tr>';
 
-		$precipitation_value = $precipitation_forecast[ $data_point['time'] ];
+		$precipitation_value = $data_point['precipitation'];
 
 		if ( false === is_numeric( $precipitation_value ) || $precipitation_value <= 0 ) {
 			$precipitation_value = 0;
@@ -682,120 +643,16 @@ function print_forecast() {
 		$output .= '</td>';
 
 		$output .= '</tr></tbody></table>';
-		$output .= '<span class="forecast__data-point--hmdy-value" data-precipitation-subtotal="' . $precipitation_value . '">' . $precipitation_value . '</span>';
+		$output .= '<span class="forecast__data-point--hmdy-value" data-precipitation-subtotal="' . $precipitation_value . '">' . round( $precipitation_value, 1 ) . '</span>';
 
 		$output .= '</div>' . PHP_EOL;
 
 		$forecast_data_points--;
 	}
+	$output .= '</div>' . PHP_EOL;
 
-	foreach ( $future_forecast as $index => $data_point ) {
-
-		// Print only defined amount of data points at maximum
-		if ( $forecast_data_points <= 0 ) {
-			continue;
-		}
-
-		// If weather forecast data point does not contain weather symbol, return early.
-		if ( ! is_numeric( $data_point['symbol'] ) ) {
-			continue;
-		}
-
-		if ( date( 'H', time() ) > 21 ) {
-			$start_hour = 7;
-			$end_hour   = 21;
-		} else {
-			$start_hour = 7;
-			$end_hour   = 21;
-		}
-
-		if ( (int) date( 'H', $data_point['time'] ) < $start_hour || (int) date( 'H', $data_point['time'] ) > $end_hour ) {
-			continue;
-		}
-
-		if ( date( 'H', $data_point['time'] ) < $previous_data_point_hour ) {
-			$every_other_weekday = ! $every_other_weekday;
-			$print_weekday       = true;
-		}
-
-		$previous_data_point_hour = date( 'H', $data_point['time'] );
-
-		$output .= '<div class="forecast__data-point far-future';
-
-		if ( $every_other_weekday ) {
-			$output .= ' colored-bg';
-		}
-
-		$output .= '" data-time="' . $data_point['time'] . '">';
-
-		if ( $print_weekday || 0 === $index ) {
-			$output .= '<span class="forecast__data-point--weekday">' . $weekday_names[ date( 'D', $data_point['time'] ) ] . '</span>';
-			if ( 0 !== $index ) {
-				$day_counter++;
-			}
-			$print_weekday = false;
-		}
-
-		$output .= '<span class="forecast__data-point--hour">' . date( 'H', $data_point['time'] ) . '</span>';
-
-		$sun_info_datapoint = date_sun_info( $data_point['time'], LATITUDE, LONGITUDE );
-		$sunset_datapoint   = $sun_info_datapoint['sunset'];
-
-		if ( $data_point['time'] > $sunset_datapoint ) {
-			$sunrise = $sunrise_tomorrow;
-		} else {
-			$sunrise = $sun_info_datapoint['sunrise'];
-		}
-
-		$symbol_number = (int) $data_point['symbol'];
-		if ( array_key_exists( $symbol_number, $fmi_weather_symbols ) ) {
-			$symbol_number = $fmi_weather_symbols[ $symbol_number ];
-		}
-
-		if ( $data_point['time'] > $sunset_datapoint || $data_point['time'] < $sunrise ) {
-			$symbol_number = $symbol_number + 100;
-		}
-
-		$output .= '<svg class="weather-symbol symbol-' . $data_point['symbol'] . '">';
-		$output .= '<use xlink:href="#' . $symbol_number . '" /></svg>';
-
-		$output .= '<span class="forecast__data-point--temp">' . round( $data_point['temp'] ) . '</span><span class="forecast__data-point--celcius">°</span>';
-
-		// Precipitation output
-		$output .= '<table class="forecast__data-point--hmdy"><tbody><tr>';
-
-		$precipitation_subtotal = 0;
-
-		for ( $i = 0; $i < $future_timestep_hours; $i++ ) {
-			$precipitation_value = $precipitation_forecast[ $data_point['time'] + $i * HOUR_IN_SECONDS ];
-
-			if ( is_numeric( $precipitation_value ) ) {
-				$precipitation_subtotal = $precipitation_subtotal + $precipitation_value;
-			} else {
-				$precipitation_value = 0;
-			}
-
-			$output .= '<td class="forecast__data-point--hmdy-bar" data-precipitation-value="' . $precipitation_value . '">';
-
-			if ( $precipitation_value > 0 ) {
-				$output .= '<div style="height:' . netatmo_calculate_precipitation_graph_height( $precipitation_value ) . 'px;"></div>';
-			} else {
-				$output .= '<div class="forecast__data-point--hmdy-bar__null"></div>';
-			}
-
-			$output .= '</td>';
-		}
-
-		$output .= '</tr></tbody></table>';
-		$output .= '<span class="forecast__data-point--hmdy-value" data-precipitation-subtotal="' . $precipitation_subtotal . '">' . $precipitation_subtotal . '</span>';
-
-		$output .= '</div>' . PHP_EOL;
-
-		$forecast_data_points--;
-	}
-
-	$output .= '</div>';
 	return $output;
+
 }
 
 function netatmo_calculate_precipitation_graph_height( $value ) {

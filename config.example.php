@@ -8,10 +8,11 @@ define( 'CLIENT_SECRET', '' );
 // See https://helpcenter.netatmo.com/en-us/smart-home-weather-station-and-accessories/product-interactions/how-do-i-find-my-products-serial-number-or-its-mac-address
 define( 'STATION_MAC', '' );
 
-// Your latitude and longitude.
+// Your latitude, longitude and altitude in meters.
 // This is for weather forecast and sunrise/sunset times.
 define( 'LATITUDE', '' );
 define( 'LONGITUDE', '' );
+define( 'ALTITUDE', '' );
 
 // Define the local redirect URL. Probably no need to touch.
 define( 'LOCAL_URL', "https://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" );
