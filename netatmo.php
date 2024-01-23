@@ -448,6 +448,7 @@ function human_time_difference( $timestamp ) {
 
 /**
  * Get weather forecast from YR.no.
+ *
  * @see https://developer.yr.no/doc/GettingStarted/
  */
 function get_yr_data() {
@@ -456,13 +457,13 @@ function get_yr_data() {
 	$forecast_json = array();
 
 	// Define the YR.no URL.
-	$yr_url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?altitude=' . ALTITUDE . '&lat='. LATITUDE. '&lon='. LONGITUDE;
+	$yr_url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?altitude=' . ALTITUDE . '&lat=' . LATITUDE . '&lon=' . LONGITUDE;
 
 	// Define User-Agent header for HTTP request as instructed by YR.
 	$options = array(
 		'http' => array(
-			'user_agent' => 'netatmo-weather-display/1.1 github.com/mikkosiikaniemi/netatmo-weather-display'
-		)
+			'user_agent' => 'netatmo-weather-display/1.1 github.com/mikkosiikaniemi/netatmo-weather-display',
+		),
 	);
 
 	$context = stream_context_create( $options );
@@ -471,9 +472,9 @@ function get_yr_data() {
 	$yr_headers = get_headers( $yr_url, true, $context );
 
 	// If YR 'Expires' header is in the past, get new fresh data. Store in session.
-	if ( strtotime( $yr_headers['Expires'] ) < time() ) {
-		$forecast_json = file_get_contents( 'https://api.met.no/weatherapi/locationforecast/2.0/compact?altitude=60&lat='. LATITUDE. '&lon='. LONGITUDE, false, $context );
-		$_SESSION['forecast'] = $forecast_json;
+	if ( strtotime( $yr_headers['Expires'] ) < time() || empty( $_SESSION['forecast'] ) ) {
+		$forecast_json                = file_get_contents( 'https://api.met.no/weatherapi/locationforecast/2.0/compact?altitude=60&lat=' . LATITUDE . '&lon=' . LONGITUDE, false, $context );
+		$_SESSION['forecast']         = $forecast_json;
 		$_SESSION['forecast_expires'] = strtotime( $yr_headers['Expires'] );
 	} else {
 		// Otherwise, use data stored in session.
@@ -506,10 +507,10 @@ function print_yr_forecast() {
 	foreach ( $time_series as $index => $data ) {
 
 		$datapoint_timestamp = strtotime( $data['time'] );
-		$datapoint_human = date( 'j.n.Y H:i', strtotime( $data['time'] ) );
+		$datapoint_human     = date( 'j.n.Y H:i', strtotime( $data['time'] ) );
 
 		// Only process the next three days worth of data points.
-		if ( $datapoint_timestamp > strtotime('+3 day') ) {
+		if ( $datapoint_timestamp > strtotime( '+3 day' ) ) {
 			continue;
 		}
 
@@ -526,7 +527,7 @@ function print_yr_forecast() {
 
 		if ( $datapoint_timestamp >= strtotime( 'tomorrow' ) ) {
 
-			//For tomorrow's forecast and further, use 6-hour steps.
+			// For tomorrow's forecast and further, use 6-hour steps.
 			$forecast_scope = 'next_6_hours';
 
 			// Skip other than 6-hour stepped future data points.
@@ -536,12 +537,12 @@ function print_yr_forecast() {
 		}
 
 		// Process and store the relevant data point measurements.
-		$forecast_data[ $index ]['time'] = $datapoint_timestamp;
+		$forecast_data[ $index ]['time']       = $datapoint_timestamp;
 		$forecast_data[ $index ]['human_time'] = date( 'j.n.Y H:i', $datapoint_timestamp );
-		$forecast_data[ $index ]['temp'] = $data['data']['instant']['details']['air_temperature'];
+		$forecast_data[ $index ]['temp']       = $data['data']['instant']['details']['air_temperature'];
 
 		if ( isset( $data['data'][ $forecast_scope ] ) ) {
-			$forecast_data[ $index ]['symbol'] = $data['data'][ $forecast_scope ]['summary']['symbol_code'];
+			$forecast_data[ $index ]['symbol']        = $data['data'][ $forecast_scope ]['summary']['symbol_code'];
 			$forecast_data[ $index ]['precipitation'] = number_format( $data['data'][ $forecast_scope ]['details']['precipitation_amount'], 2 );
 		}
 	}
@@ -572,11 +573,10 @@ function print_yr_forecast() {
 		'fog'                => 109,
 	);
 
-
-	$print_weekday        = false;
-	$every_other_weekday  = false;
-	$day_counter          = 1;
-	$forecast_data_points = 20;
+	$print_weekday            = false;
+	$every_other_weekday      = false;
+	$day_counter              = 1;
+	$forecast_data_points     = 20;
 	$previous_data_point_hour = date( 'H', time() );
 
 	$output .= '<div id="forecast" class="padded">';
