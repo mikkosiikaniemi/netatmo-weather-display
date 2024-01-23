@@ -53,7 +53,8 @@
 				//console.log('Temperatures updated.');
 			}
 			else {
-				placeholder.innerHTML = 'bb' + request.status + request.response;
+				placeholder.innerHTML = 'Request status != 200: ' + request.status + request.response;
+				drawCharts();
 				//console.log('server error');
 			}
 			updateInProgress = false;
@@ -62,7 +63,7 @@
 		};
 
 		request.onerror = function () {
-			placeholder.innerHTML = 'cc' + request.status + request.response;
+			placeholder.innerHTML = 'Request error: ' + request.status + request.response;
 			//console.log('something went wrong');
 		};
 
