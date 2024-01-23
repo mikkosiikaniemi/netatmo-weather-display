@@ -157,14 +157,14 @@ function get_module_info( $module, $rain_module = false ) {
 			<?php if ( 'outdoor' === $module_type ) : ?>
 			<div class="module__details--minmax">
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"  stroke-linecap="round" stroke-linejoin="round" class="icon-stroked feather feather-droplet"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
-				<?php echo $module->dashboard_data->Humidity; ?> %
+				<span class="minmax__measurement"><?php echo $module->dashboard_data->Humidity; ?> %</span>
 				<svg xmlns="http://www.w3.org/2000/svg" width="65.6" height="95" viewBox="0 0 65.6 95" class="icon-filled"><path d="M64.5 42.8l-7.9-7.9-18.2 18.3V0H27.2v53.2L9 34.9l-7.9 7.9 31.7 31.7zM0 83.9h65.6V95H0z"/></svg>
-				<?php echo number_format( $module->dashboard_data->min_temp, 1 ); ?>°
+				<span class="minmax__measurement"><?php echo number_format( $module->dashboard_data->min_temp, 1 ); ?>°</span>
 				<svg xmlns="http://www.w3.org/2000/svg" width="65.6" height="95" viewBox="0 0 65.6 95" class="icon-filled"><path d="M1.1 52.2L9 60.1l18.2-18.3V95h11.2V41.8l18.2 18.3 7.9-7.9-31.7-31.7zM0 0h65.6v11.1H0z"/></svg>
-				<?php echo number_format( $module->dashboard_data->max_temp, 1 ); ?>°
+				<span class="minmax__measurement"><?php echo number_format( $module->dashboard_data->max_temp, 1 ); ?>°
 				<?php if ( $rain_module->reachable === true ) : ?>
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" class="icon-stroked"><path d="M23 12a11.05 11.05 0 0 0-22 0zm-5 7a3 3 0 0 1-6 0v-7"></path></svg>
-					<?php echo $rain_module->dashboard_data->sum_rain_24; ?> mm
+				<span class="minmax__measurement"><?php echo $rain_module->dashboard_data->sum_rain_24; ?> mm</span>
 				<?php endif; ?>
 			</div>
 			<?php endif; ?>

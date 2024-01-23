@@ -28,3 +28,9 @@ When developing and testing locally, you may bump into an error message saying `
 curl.cainfo = "c:\example_folder\cacert.pem"
 ``` 
 If you're using Local by Flywheel on Windows, the correct file is `php.ini.hbs` and can fe found under `Local Sites\<sitename>\conf\php-x.y.z` where `x.y.z` is the PHP version currently utilized by the site. Add the line, restart the site.  
+
+## Credits
+
+Weather forecast from [Norwegian Meteorological Institute's developer API](https://developer.yr.no/doc/GettingStarted/).
+
+Icons from [Feather Icons](https://feathericons.com/). Weather symbols from [Finnish Meteorological Institute](https://www.ilmatieteenlaitos.fi/saamerkkien-selitykset).

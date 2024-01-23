@@ -25,7 +25,9 @@
 
 		var currentDateString = currentWeekDay + ' ' + currentDay + '.' + currentMonth + '.' + currentYear;
 		var currentTimeString = currentHours + ":" + currentMinutes + ":" + currentSeconds;
-		document.getElementsByClassName('date-and-time')[0].innerHTML = '<a href="#date-and-time" class="date">' + currentDateString + '</a><span class="time">' + currentTimeString + '</span>';
+
+		document.getElementById('date').innerText = currentDateString;
+		document.getElementById('time').innerText = currentTimeString;
 	}
 
 	function updateTemperatures() {
@@ -33,13 +35,7 @@
 		var placeholder = document.getElementById('temperatures-and-forecast');
 		var updateButton = document.getElementById('refresh');
 
-		updateButton.innerHTML = 'Päivitetään... <span id="updateTimer">0</span>';
-		var updateTicks = 1;
-		var timer = document.getElementById('updateTimer');
-		var tickUpdate = setInterval( function() {
-			timer.innerHTML = updateTicks;
-			updateTicks += 1;
-		}, 1000 );
+		updateButton.classList.add('updating');
 
 		var request = new XMLHttpRequest();
 		// Make an AJAX request to handler PHP file
@@ -58,8 +54,8 @@
 				//console.log('server error');
 			}
 			updateInProgress = false;
-			clearInterval( tickUpdate );
-			updateButton.innerHTML = "Päivitä";
+			//clearInterval( tickUpdate );
+			updateButton.classList.remove('updating');
 		};
 
 		request.onerror = function () {
@@ -153,10 +149,12 @@
 
 		var progress_bar = $('.update-timer__bar');
 
-		progress_bar.stop().width(0);
-		progress_bar.animate({
-			width: '100%',
-		}, updateInterval * 1000, 'linear' );
+		var now = new Date();
+		var secondsPassedToday = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+		var secondsInADay = 24 * 60 * 60;
+		var todayPercentage = secondsPassedToday / secondsInADay * 100;
+
+		progress_bar.width(todayPercentage + '%');
 
 		var rain_data_points, n;
 
