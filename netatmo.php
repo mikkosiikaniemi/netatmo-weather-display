@@ -559,8 +559,9 @@ function print_yr_forecast() {
 
 	// Map weather symbol names to SVG files. See subdir ./svg for numbers.
 	$weather_symbols = array(
-		'fair_day'           => 2,
-		'partlycloudy_day'   => 4,
+		'clearsky_day'       => 2,
+		'fair_day'           => 4,
+		'partlycloudy_day'   => 6,
 		'cloudy'             => 7,
 		'lightrain'          => 37,
 		'rain'               => 38,
