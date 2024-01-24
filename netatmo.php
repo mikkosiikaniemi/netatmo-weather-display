@@ -303,7 +303,13 @@ function get_module_info( $module, $rain_module = false ) {
 
 function get_access_token() {
 
-	global $provider;
+	$provider = new \Rugaard\OAuth2\Client\Netatmo\Provider\Netatmo(
+		array(
+			'clientId'     => CLIENT_ID,
+			'clientSecret' => CLIENT_SECRET,
+			'redirectUri'  => LOCAL_URL,
+		)
+	);
 
 	// Try to get an access token using the authorization code grant.
 	$accessToken = $provider->getAccessToken(
