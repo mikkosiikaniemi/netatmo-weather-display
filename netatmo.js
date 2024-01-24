@@ -23,7 +23,7 @@
 		currentMinutes = (currentMinutes < 10 ? "0" : "") + currentMinutes;
 		currentSeconds = (currentSeconds < 10 ? "0" : "") + currentSeconds;
 
-		var currentDateString = currentWeekDay + ' ' + currentDay + '.' + currentMonth + '.' + currentYear;
+		var currentDateString = currentWeekDay + ' ' + currentDay + '.' + currentMonth + '.';
 		var currentTimeString = currentHours + ":" + currentMinutes + ":" + currentSeconds;
 
 		document.getElementById('date').innerText = currentDateString;
