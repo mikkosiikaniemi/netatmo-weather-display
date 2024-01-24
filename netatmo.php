@@ -516,7 +516,7 @@ function print_yr_forecast() {
 		$datapoint_human     = date( 'j.n.Y H:i', strtotime( $data['time'] ) );
 
 		// Only process the next three days worth of data points.
-		if ( $datapoint_timestamp > strtotime( '+3 day' ) ) {
+		if ( $datapoint_timestamp > strtotime( '+5 day' ) ) {
 			continue;
 		}
 
@@ -574,9 +574,11 @@ function print_yr_forecast() {
 		'lightsleet'         => 47,
 		'sleet'              => 48,
 		'heavysleet'         => 49,
+		'lightsnow'          => 57,
 		'snow'               => 58,
 		'clearsky_night'     => 101,
-		'partlycloudy_night' => 104,
+		'fair_night'         => 104,
+		'partlycloudy_night' => 106,
 		'fog'                => 109,
 	);
 
