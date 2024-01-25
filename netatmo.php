@@ -531,7 +531,13 @@ function print_yr_forecast() {
 		 */
 		$forecast_scope = 'next_1_hours';
 
-		if ( $datapoint_timestamp >= strtotime( 'tomorrow' ) ) {
+		/**
+		 * Use 6-hour scope for two cases:
+		 * 1. if it's before 14 o'clock today → tomorrow's forecast onwards.
+		 * 2. if it's after 14 o'clock today → today's forecast between today
+		 *    evening and tomorrow morning, and tomorrow afternoon onwards.
+		 */
+		if ( ( ( $datapoint_timestamp > strtotime( 'today 19:00' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00' ) && time() > strtotime( 'today 14:00' ) ) || ( time() < strtotime( 'today 14:00' ) && $datapoint_timestamp >= strtotime( 'tomorrow' ) ) ) {
 
 			// For tomorrow's forecast and further, use 6-hour steps.
 			$forecast_scope = 'next_6_hours';
@@ -546,6 +552,7 @@ function print_yr_forecast() {
 		$forecast_data[ $index ]['time']       = $datapoint_timestamp;
 		$forecast_data[ $index ]['human_time'] = date( 'j.n.Y H:i', $datapoint_timestamp );
 		$forecast_data[ $index ]['temp']       = $data['data']['instant']['details']['air_temperature'];
+		$forecast_data[ $index ]['scope']      = $forecast_scope;
 
 		if ( isset( $data['data'][ $forecast_scope ] ) ) {
 			$forecast_data[ $index ]['symbol']        = $data['data'][ $forecast_scope ]['summary']['symbol_code'];
