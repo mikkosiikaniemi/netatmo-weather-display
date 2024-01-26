@@ -370,11 +370,11 @@
 						data: humidity_data,
 						color: 'rgba(41,171,226,0.2)',
 						yaxis: 2,
+						shadowSize: 0,
 						lines: {
 							show: true,
 							fill: false,
 							lineWidth: 2,
-							shadowSize: 0,
 							borderWidth: 1,
 						}
 					},
@@ -437,6 +437,17 @@
 		$('#refresh').click( function() {
 			//console.log('Refresh called.');
 			updateTemperatures();
+		});
+
+		$('#dark-mode').click(function () {
+			$('body').toggleClass('dark-mode');
+			if ($('body').hasClass('dark-mode')) {
+				$('[data-class="dark-mode"]').show();
+				$('[data-class="light-mode"]').hide();
+			} else {
+				$('[data-class="dark-mode"]').hide();
+				$('[data-class="light-mode"]').show();
+			}
 		});
 
 		setInterval(updateClock, 1000);

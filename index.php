@@ -92,6 +92,15 @@ if ( isset( $_SESSION['state'] ) ) {
 					<path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/>
 				</svg>
 			</button>
+			<button id="dark-mode" aria-label="Tumma/vaalea tila">
+				<svg xmlns="http://www.w3.org/2000/svg" data-class="dark-mode" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="icon-stroked feather feather-sun" viewBox="0 0 24 24">
+					<circle cx="12" cy="12" r="5"/>
+					<path d="M12 1v2m0 18v2M4.2 4.2l1.4 1.4m12.8 12.8 1.4 1.4M1 12h2m18 0h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>
+				</svg>
+				<svg xmlns="http://www.w3.org/2000/svg" data-class="light-mode" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="icon-stroked feather feather-moon" viewBox="0 0 24 24" style="display: none;">
+  				<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+				</svg>
+			</button>
 			<form action="<?php echo basename( $_SERVER['PHP_SELF'] ); ?>" method="post">
 				<input type="hidden" name="logout" value="true" />
 				<button type="submit" aria-label="Kirjaudu ulos">

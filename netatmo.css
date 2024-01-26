@@ -127,6 +127,10 @@ p {
 	text-align: center;
 }
 
+.padded {
+	padding: 2rem;
+}
+
 .date-and-time {
 	display: flex;
 	align-items: center;
@@ -136,6 +140,7 @@ p {
 	font-weight: 100;
 	text-align: initial;
 	margin-bottom: 0;
+	padding-bottom: 3rem;
 }
 
 .date,
@@ -285,15 +290,9 @@ p {
 }
 
 .update-timer {
-	background-image: -webkit-linear-gradient(right, hsl(0, 0%, 70%) 96%, white 96.001%, white 100%);
-	background-image: linear-gradient(to right, hsl(0, 0%, 70%) 96%, white 96.001%, white 100%);
+	background-image: linear-gradient(to right, hsla(0,0%,60%,0.2) 90%, transparent 90.001%, transparent 100%);
 	background-size: 4.166666666666667%;
 	margin-bottom: 2rem;
-}
-
-.dark-mode .update-timer {
-	background-image: -webkit-linear-gradient(right, #444 90%, black 90.001%, black 100%);
-	background-image: linear-gradient(to right, #444 90%, black 90.001%, black 100%);
 }
 
 .update-timer__bar {
@@ -319,9 +318,13 @@ p {
 	height: .5rem;
 	outline: solid 2px rgb(200, 20, 30);
 	border-radius: 1rem;
-	background-color: #000;
+	background-color: #fff;
 	top: 0;
 	transform: translateY( calc( -50% + 1px ) );
+}
+
+.dark-mode .update-timer__bar::after {
+	background-color: #000;
 }
 
 .data-time {
@@ -339,16 +342,22 @@ button {
 	-webkit-appearance: button;
 	border: 0;
 	padding: 1rem;
-	border-radius: 3rem;
+	border-radius: 1rem;
 	font-family: "HelveticaNeue-Medium", sans-serif;
 	text-transform: uppercase;
 	letter-spacing: .02em;
 	cursor: pointer;
 	font-family: inherit;
-	background-color: rgba(240, 240, 240, 0.5);
+	background-color: hsla(0,0%,60%,0.2);
 	font-size: 2rem;
 	width: 5rem;
 	height: 4rem;
+	transition: background-color 100ms ease-in-out;
+	color: #666;
+}
+
+button:hover {
+	background-color: hsla(0,0%,20%,0.2);
 }
 
 #actions button {
@@ -374,7 +383,6 @@ button {
 
 .dark-mode button {
 	color: #666;
-	background-color: #222;
 }
 
 .module__details--minmax {
@@ -409,7 +417,7 @@ svg[class*="icon-"] {
 .sunrise-sunset {
 	position: relative;
 	margin-top: -3rem;
-	padding-bottom: 4rem;
+	padding-bottom: 3rem;
 }
 
 .sunrise-sunset>* {
@@ -433,7 +441,13 @@ svg[class*="icon-"] {
 
 .sunrise-sunset span {
 	display: block;
-	font-size: 70%;
+	font-size: 80%;
+	opacity: .7;
+}
+
+.sunrise-sunset .icon-stroked {
+	width: 1.2em;
+	height: 1.2em;
 }
 
 .forecast__data-point--hmdy {
@@ -461,11 +475,7 @@ svg[class*="icon-"] {
 
 .forecast__data-point--hmdy-bar .forecast__data-point--hmdy-bar__null {
 	height: 1px;
-	background-color: #333;
-}
-
-.padded {
-	padding: 2rem;
+	background-color: hsla(0,0%,50%,0.3);
 }
 
 #forecast {
@@ -506,7 +516,17 @@ svg[class*="icon-"] {
 }
 
 .colored-bg {
-	background-color: rgba(240, 240, 240, 0.1);
+	background-color: hsla(0,0%,60%,0.2);
+}
+
+.colored-bg--start {
+	border-top-left-radius: .5rem;
+	border-bottom-left-radius: .5rem;
+}
+
+.colored-bg--end {
+	border-top-right-radius: .25rem;
+	border-bottom-right-radius: .25rem;
 }
 
 .forecast__data-point--weekday {
