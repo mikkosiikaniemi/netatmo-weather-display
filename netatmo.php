@@ -589,11 +589,12 @@ function print_yr_forecast() {
 		'fog'                => 109,
 	);
 
-	$print_weekday            = false;
-	$every_other_weekday      = false;
-	$day_counter              = 1;
-	$forecast_data_points     = 20;
-	$previous_data_point_hour = date( 'H', time() );
+	$print_weekday               = false;
+	$every_other_weekday         = false;
+	$day_counter                 = 1;
+	$forecast_data_points        = 20;
+	$previous_data_point_hour    = date( 'H', time() );
+	$every_other_weekday_started = false;
 
 	$output .= '<div id="forecast" class="padded">';
 
@@ -620,9 +621,16 @@ function print_yr_forecast() {
 
 		if ( $every_other_weekday ) {
 			$output .= ' colored-bg';
+			if ( $every_other_weekday_started === false ) {
+				$output                     .= ' colored-bg--start';
+				$every_other_weekday_started = true;
+			}
+		} else {
+			$every_other_weekday_started = false;
 		}
 
-		$output .= '" data-time="' . $data_point['time'] . '">';
+		$output .= '" data-time="' . $data_point['time'] . '"';
+		$output .= '>';
 
 		if ( $print_weekday || array_key_first( $forecast_data ) === $index ) {
 			$output .= '<span class="forecast__data-point--weekday">' . $weekday_names[ date( 'D', $data_point['time'] ) ] . '</span>';
