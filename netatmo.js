@@ -241,8 +241,8 @@
 				} else {
 					//console.log( 'Outdoor temperature graph normalized, option B.');
 					outdoor_options = {
-						low: min_temp - ( outdoor_normalization - outdoor_temp_diff )/2,
-						high: max_temp + ( outdoor_normalization - outdoor_temp_diff )/2,
+						low: Math.round( min_temp - ( outdoor_normalization - outdoor_temp_diff )/2 ),
+						high: Math.round( max_temp + ( outdoor_normalization - outdoor_temp_diff )/2 ),
 					};
 				}
 				if ( min_temp >= 0) {
