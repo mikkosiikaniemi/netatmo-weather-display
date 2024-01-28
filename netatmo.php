@@ -22,7 +22,7 @@ define( 'MONTH_IN_SECONDS', 30 * DAY_IN_SECONDS );
 define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
 
 // Define automatic update interval
-DEFINE( 'NETATMO_UPDATE_INTERVAL', 11 * MINUTE_IN_SECONDS );
+DEFINE( 'NETATMO_UPDATE_INTERVAL', 10.5 * MINUTE_IN_SECONDS );
 
 /**
  * Print temperatures for all modules
@@ -549,10 +549,12 @@ function print_yr_forecast() {
 		}
 
 		// Process and store the relevant data point measurements.
-		$forecast_data[ $index ]['time']       = $datapoint_timestamp;
-		$forecast_data[ $index ]['human_time'] = date( 'j.n.Y H:i', $datapoint_timestamp );
-		$forecast_data[ $index ]['temp']       = $data['data']['instant']['details']['air_temperature'];
-		$forecast_data[ $index ]['scope']      = $forecast_scope;
+		$forecast_data[ $index ]['time']                = $datapoint_timestamp;
+		$forecast_data[ $index ]['human_time']          = date( 'j.n.Y H:i', $datapoint_timestamp );
+		$forecast_data[ $index ]['temp']                = $data['data']['instant']['details']['air_temperature'];
+		$forecast_data[ $index ]['wind_speed']          = $data['data']['instant']['details']['wind_speed'];
+		$forecast_data[ $index ]['wind_from_direction'] = $data['data']['instant']['details']['wind_from_direction'];
+		$forecast_data[ $index ]['scope']               = $forecast_scope;
 
 		if ( isset( $data['data'][ $forecast_scope ] ) ) {
 			$forecast_data[ $index ]['symbol']        = $data['data'][ $forecast_scope ]['summary']['symbol_code'];
@@ -668,6 +670,8 @@ function print_yr_forecast() {
 
 		$output .= '</tr></tbody></table>';
 		$output .= '<span class="forecast__data-point--hmdy-value" data-precipitation-subtotal="' . $precipitation_value . '">' . round( $precipitation_value, 1 ) . '</span>';
+
+		$output .= '<div class="forecast__data-point--wind" style="transform: rotate('. $data_point['wind_from_direction'].'deg);"><span class="forecast__data-point--wind-value" style="transform: rotate(-'. $data_point['wind_from_direction'].'deg);">' . round( $data_point['wind_speed'] ) . '</span></div>';
 
 		$output .= '</div>' . PHP_EOL;
 

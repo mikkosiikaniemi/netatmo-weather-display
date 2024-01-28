@@ -128,7 +128,7 @@ p {
 }
 
 .padded {
-	padding: 2rem;
+	padding: 2.5rem 2rem;
 }
 
 .date-and-time {
@@ -417,7 +417,7 @@ svg[class*="icon-"] {
 .sunrise-sunset {
 	position: relative;
 	margin-top: -3rem;
-	padding-bottom: 3rem;
+	padding-bottom: 4rem;
 }
 
 .sunrise-sunset>* {
@@ -478,9 +478,43 @@ svg[class*="icon-"] {
 	background-color: hsla(0,0%,50%,0.3);
 }
 
+.forecast__data-point--wind {
+	display: block;
+	font-size: 1.3rem;
+	height: 2.2rem;
+	width: 2.2rem;
+	padding: .4rem;
+	text-align: center;
+	position: relative;
+	margin-top: 1rem;
+	margin-left: .55rem;
+}
+
+.forecast__data-point--wind:after {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	color: hsla(0,0%,60%,0.2);
+	border-top-right-radius: 2rem;
+	border-top-left-radius: 2rem;
+	border-bottom-left-radius: 2rem;
+	border: 2px solid hsla(0,0%,50%,0.4);
+	transform: rotate(45deg);
+	height: 2.2rem;
+	width: 2.2rem;
+	box-shadow: 1px 1px 0 hsla(0,0%,60%,0.6);
+}
+
+.forecast__data-point--wind-value {
+	display: block;
+	color: hsla(0,0%,50%,1);
+}
+
 #forecast {
 	display: table;
 	margin: 0 auto;
+	padding-bottom: 0;
 }
 
 .forecast__data-point {
