@@ -128,7 +128,7 @@ p {
 }
 
 .padded {
-	padding: 2.5rem 2rem;
+	padding: 2rem;
 }
 
 .date-and-time {
@@ -550,7 +550,7 @@ svg[class*="icon-"] {
 }
 
 .colored-bg {
-	background-color: hsla(0,0%,60%,0.2);
+	background-color: hsla(0,0%,60%,0.1);
 }
 
 .colored-bg--start {
