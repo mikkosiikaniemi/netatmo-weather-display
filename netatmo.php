@@ -478,7 +478,7 @@ function get_yr_data() {
 	$yr_headers = get_headers( $yr_url, true, $context );
 
 	// If YR 'Expires' header is in the past, get new fresh data. Store in session.
-	if ( strtotime( $yr_headers['Expires'] ) < time() || empty( $_SESSION['forecast'] ) ) {
+	if ( $_SESSION['forecast_expires'] < time() || empty( $_SESSION['forecast'] ) ) {
 		$forecast_json                = file_get_contents( 'https://api.met.no/weatherapi/locationforecast/2.0/compact?altitude=60&lat=' . LATITUDE . '&lon=' . LONGITUDE, false, $context );
 		$_SESSION['forecast']         = $forecast_json;
 		$_SESSION['forecast_expires'] = strtotime( $yr_headers['Expires'] );
@@ -533,16 +533,22 @@ function print_yr_forecast() {
 
 		/**
 		 * Use 6-hour scope for two cases:
-		 * 1. if it's before 14 o'clock today → tomorrow's forecast onwards.
-		 * 2. if it's after 14 o'clock today → today's forecast between today
+		 * 1. if it's before 16 o'clock today → today's forecast between today
 		 *    evening and tomorrow morning, and tomorrow afternoon onwards.
+		 * 2. if it's after 16 o'clock today → tomorrow night's forecast and
+		 *    tomorrow afternoon onwards.
 		 */
-		if ( ( ( $datapoint_timestamp > strtotime( 'today 19:00' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00' ) && time() > strtotime( 'today 14:00' ) ) || ( time() < strtotime( 'today 14:00' ) && $datapoint_timestamp >= strtotime( 'tomorrow' ) ) ) {
+		if ( time() < strtotime( 'today 16:00' ) ) {
+			if ( ( $datapoint_timestamp > strtotime( 'today 19:00' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00' ) ) {
+				$forecast_scope = 'next_6_hours';
+			}
+		} else {
+			if ( ( $datapoint_timestamp > strtotime( 'tomorrow 01:00' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00' ) ) {
+				$forecast_scope = 'next_6_hours';
+			}
+		}
 
-			// For tomorrow's forecast and further, use 6-hour steps.
-			$forecast_scope = 'next_6_hours';
-
-			// Skip other than 6-hour stepped future data points.
+		if ( $forecast_scope === 'next_6_hours' ) {
 			if ( false === in_array( (int) date( 'H', $datapoint_timestamp ), array( 2, 8, 14, 20 ) ) ) {
 				continue;
 			}
@@ -572,23 +578,96 @@ function print_yr_forecast() {
 		'Sun' => 'Su',
 	);
 
-	// Map weather symbol names to SVG files. See subdir ./svg for numbers.
-	$weather_symbols = array(
-		'clearsky_day'       => 2,
-		'fair_day'           => 4,
-		'partlycloudy_day'   => 6,
-		'cloudy'             => 7,
-		'lightrain'          => 37,
-		'rain'               => 38,
-		'lightsleet'         => 47,
-		'sleet'              => 48,
-		'heavysleet'         => 49,
-		'lightsnow'          => 57,
-		'snow'               => 58,
-		'clearsky_night'     => 101,
-		'fair_night'         => 104,
-		'partlycloudy_night' => 106,
-		'fog'                => 109,
+	/**
+	 * Map weather symbol names to SVG files. See subdir ./svg/yr for numbers.
+	 *
+	 * @see https://nrkno.github.io/yr-weather-symbols/
+	 * @see https://github.com/nrkno/yr-weather-symbols/blob/master/src/index.ts
+	 */
+	$yr_weather_symbols = array(
+		'clearsky_day'                               => '01d',
+		'clearsky_night'                             => '01n',
+		'clearsky_polartwilight'                     => '01m',
+		'fair_day'                                   => '02d',
+		'fair_night'                                 => '02n',
+		'fair_polartwilight'                         => '02m',
+		'partlycloudy_day'                           => '03d',
+		'partlycloudy_night'                         => '03n',
+		'partlycloudy_polartwilight'                 => '03m',
+		'cloudy'                                     => '04',
+		'rainshowers_day'                            => '05d',
+		'rainshowers_night'                          => '05n',
+		'rainshowers_polartwilight'                  => '05m',
+		'rainshowersandthunder_day'                  => '06d',
+		'rainshowersandthunder_night'                => '06n',
+		'rainshowersandthunder_polartwilight'        => '06m',
+		'sleetshowers_day'                           => '07d',
+		'sleetshowers_night'                         => '07n',
+		'sleetshowers_polartwilight'                 => '07m',
+		'snowshowers_day'                            => '08d',
+		'snowshowers_night'                          => '08n',
+		'snowshowers_polartwilight'                  => '08m',
+		'rain'                                       => '09',
+		'heavyrain'                                  => '10',
+		'heavyrainandthunder'                        => '11',
+		'sleet'                                      => '12',
+		'snow'                                       => '13',
+		'snowandthunder'                             => '14',
+		'fog'                                        => '15',
+		'sleetshowersandthunder_day'                 => '20d',
+		'sleetshowersandthunder_night'               => '20n',
+		'sleetshowersandthunder_polartwilight'       => '20m',
+		'snowshowersandthunder_day'                  => '21d',
+		'snowshowersandthunder_night'                => '21n',
+		'snowshowersandthunder_polartwilight'        => '21m',
+		'rainandthunder'                             => '22',
+		'sleetandthunder'                            => '23',
+		'lightrainshowersandthunder_day'             => '24d',
+		'lightrainshowersandthunder_night'           => '24n',
+		'lightrainshowersandthunder_polartwilight'   => '24m',
+		'heavyrainshowersandthunder_day'             => '25d',
+		'heavyrainshowersandthunder_night'           => '25n',
+		'heavyrainshowersandthunder_polartwilight'   => '25m',
+		'lightssleetshowersandthunder_day'           => '26d',
+		'lightssleetshowersandthunder_night'         => '26n',
+		'lightssleetshowersandthunder_polartwilight' => '26m',
+		'heavysleetshowersandthunder_day'            => '27d',
+		'heavysleetshowersandthunder_night'          => '27n',
+		'heavysleetshowersandthunder_polartwilight'  => '27m',
+		'lightssnowshowersandthunder_day'            => '28d',
+		'lightssnowshowersandthunder_night'          => '28n',
+		'lightssnowshowersandthunder_polartwilight'  => '28m',
+		'heavysnowshowersandthunder_day'             => '29d',
+		'heavysnowshowersandthunder_night'           => '29n',
+		'heavysnowshowersandthunder_polartwilight'   => '29m',
+		'lightrainandthunder'                        => '30',
+		'lightsleetandthunder'                       => '31',
+		'heavysleetandthunder'                       => '32',
+		'lightsnowandthunder'                        => '33',
+		'heavysnowandthunder'                        => '34',
+		'lightrainshowers_day'                       => '40d',
+		'lightrainshowers_night'                     => '40n',
+		'lightrainshowers_polartwilight'             => '40m',
+		'heavyrainshowers_day'                       => '41d',
+		'heavyrainshowers_night'                     => '41n',
+		'heavyrainshowers_polartwilight'             => '41m',
+		'lightsleetshowers_day'                      => '42d',
+		'lightsleetshowers_night'                    => '42n',
+		'lightsleetshowers_polartwilight'            => '42m',
+		'heavysleetshowers_day'                      => '43d',
+		'heavysleetshowers_night'                    => '43n',
+		'heavysleetshowers_polartwilight'            => '43m',
+		'lightsnowshowers_day'                       => '44d',
+		'lightsnowshowers_night'                     => '44n',
+		'lightsnowshowers_polartwilight'             => '44m',
+		'heavysnowshowers_day'                       => '45d',
+		'heavysnowshowers_night'                     => '45n',
+		'heavysnowshowers_polartwilight'             => '45m',
+		'lightrain'                                  => '46',
+		'lightsleet'                                 => '47',
+		'heavysleet'                                 => '48',
+		'lightsnow'                                  => '49',
+		'heavysnow'                                  => '50',
 	);
 
 	$print_weekday               = false;
@@ -604,11 +683,6 @@ function print_yr_forecast() {
 
 		// Print only defined amount of data points at maximum.
 		if ( $forecast_data_points <= 0 ) {
-			continue;
-		}
-
-		// Skip today's forecast late hours.
-		if ( (int) date( 'H', time() ) < 22 && (int) date( 'H', $data_point['time'] ) > 22 ) {
 			continue;
 		}
 
@@ -644,8 +718,9 @@ function print_yr_forecast() {
 
 		$output .= '<span class="forecast__data-point--hour">' . date( 'H', $data_point['time'] ) . '</span>';
 
-		$output .= '<svg class="weather-symbol symbol-' . $data_point['symbol'] . '">';
-		$output .= '<use xlink:href="#' . $weather_symbols[ $data_point['symbol'] ] . '" /></svg>';
+		$output .= '<span class="weather-symbol weather-symbol--' . $data_point['symbol'] . '">';
+		$output .= file_get_contents( 'svg/yr/' . $yr_weather_symbols[ $data_point['symbol'] ] . '.svg' );
+		$output .= '</span>';
 
 		$output .= '<span class="forecast__data-point--temp">' . round( $data_point['temp'] ) . '</span><span class="forecast__data-point--celcius">°</span>';
 
@@ -671,7 +746,7 @@ function print_yr_forecast() {
 		$output .= '</tr></tbody></table>';
 		$output .= '<span class="forecast__data-point--hmdy-value" data-precipitation-subtotal="' . $precipitation_value . '">' . round( $precipitation_value, 1 ) . '</span>';
 
-		$output .= '<div class="forecast__data-point--wind" style="transform: rotate('. $data_point['wind_from_direction'].'deg);"><span class="forecast__data-point--wind-value" style="transform: rotate(-'. $data_point['wind_from_direction'].'deg);">' . round( $data_point['wind_speed'] ) . '</span></div>';
+		$output .= '<div class="forecast__data-point--wind" style="transform: rotate(' . $data_point['wind_from_direction'] . 'deg);"><span class="forecast__data-point--wind-value" style="transform: rotate(-' . $data_point['wind_from_direction'] . 'deg);">' . round( $data_point['wind_speed'] ) . '</span></div>';
 
 		$output .= '</div>' . PHP_EOL;
 

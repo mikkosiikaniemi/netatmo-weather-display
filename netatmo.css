@@ -290,7 +290,7 @@ p {
 }
 
 .update-timer {
-	background-image: linear-gradient(to right, hsla(0,0%,60%,0.2) 90%, transparent 90.001%, transparent 100%);
+	background-image: linear-gradient(to right, hsla(0, 0%, 60%, 0.2) 90%, transparent 90.001%, transparent 100%);
 	background-size: 4.166666666666667%;
 	margin-bottom: 2rem;
 }
@@ -320,7 +320,7 @@ p {
 	border-radius: 1rem;
 	background-color: #fff;
 	top: 0;
-	transform: translateY( calc( -50% + 1px ) );
+	transform: translateY(calc(-50% + 1px));
 }
 
 .dark-mode .update-timer__bar::after {
@@ -348,7 +348,7 @@ button {
 	letter-spacing: .02em;
 	cursor: pointer;
 	font-family: inherit;
-	background-color: hsla(0,0%,60%,0.2);
+	background-color: hsla(0, 0%, 60%, 0.2);
 	font-size: 2rem;
 	width: 5rem;
 	height: 4rem;
@@ -357,7 +357,7 @@ button {
 }
 
 button:hover {
-	background-color: hsla(0,0%,20%,0.2);
+	background-color: hsla(0, 0%, 20%, 0.2);
 }
 
 #actions button {
@@ -475,7 +475,7 @@ svg[class*="icon-"] {
 
 .forecast__data-point--hmdy-bar .forecast__data-point--hmdy-bar__null {
 	height: 1px;
-	background-color: hsla(0,0%,50%,0.3);
+	background-color: hsla(0, 0%, 50%, 0.3);
 }
 
 .forecast__data-point--wind {
@@ -495,20 +495,20 @@ svg[class*="icon-"] {
 	position: absolute;
 	left: 0;
 	top: 0;
-	color: hsla(0,0%,60%,0.2);
+	color: hsla(0, 0%, 60%, 0.2);
 	border-top-right-radius: 2rem;
 	border-top-left-radius: 2rem;
 	border-bottom-left-radius: 2rem;
-	border: 2px solid hsla(0,0%,50%,0.4);
+	border: 2px solid hsla(0, 0%, 50%, 0.4);
 	transform: rotate(45deg);
 	height: 2.2rem;
 	width: 2.2rem;
-	box-shadow: 1px 1px 0 hsla(0,0%,60%,0.6);
+	box-shadow: 1px 1px 0 hsla(0, 0%, 60%, 0.6);
 }
 
 .forecast__data-point--wind-value {
 	display: block;
-	color: hsla(0,0%,50%,1);
+	color: hsla(0, 0%, 50%, 1);
 }
 
 #forecast {
@@ -523,23 +523,17 @@ svg[class*="icon-"] {
 	vertical-align: bottom;
 }
 
-/*
-.forecast__data-point.near-future {
-	font-size: 2rem;
-}
-*/
 .weather-symbol {
 	width: 34px;
 	height: 44px;
 	display: block;
 }
 
-/*
-.near-future .weather-symbol {
-	width: 2.9em;
-	height: 2.9em;
+.weather-symbol svg {
+	max-width: 100%;
+	max-height: 100%;
 }
-*/
+
 .forecast__data-point--weekday,
 .forecast__data-point--hour {
 	display: block;
@@ -550,7 +544,7 @@ svg[class*="icon-"] {
 }
 
 .colored-bg {
-	background-color: hsla(0,0%,60%,0.1);
+	background-color: hsla(0, 0%, 60%, 0.1);
 }
 
 .colored-bg--start {
@@ -574,13 +568,6 @@ svg[class*="icon-"] {
 	font-size: 90%;
 	margin-top: .25rem;
 }
-
-/*
-.forecast__data-point--temp,
-.forecast__data-point--celcius {
-	font-size: 110%;
-}
-*/
 
 .forecast__data-point--celcius {
 	opacity: .5;
