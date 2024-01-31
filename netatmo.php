@@ -718,9 +718,8 @@ function print_yr_forecast() {
 
 		$output .= '<span class="forecast__data-point--hour">' . date( 'H', $data_point['time'] ) . '</span>';
 
-		$output .= '<span class="weather-symbol weather-symbol--' . $data_point['symbol'] . '">';
-		$output .= file_get_contents( 'svg/yr/' . $yr_weather_symbols[ $data_point['symbol'] ] . '.svg' );
-		$output .= '</span>';
+		$output .= '<svg class="weather-symbol symbol-' . $data_point['symbol'] . '">';
+		$output .= '<use xlink:href="#' . $yr_weather_symbols[ $data_point['symbol'] ] . '" /></svg>';
 
 		$output .= '<span class="forecast__data-point--temp">' . round( $data_point['temp'] ) . '</span><span class="forecast__data-point--celcius">°</span>';
 

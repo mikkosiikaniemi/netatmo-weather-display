@@ -7,7 +7,8 @@ var cheerio = require('gulp-cheerio');
 
 gulp.task('svgstore', function () {
 	return gulp
-		.src('svg/*.svg')
+		.src('svg/yr/*.svg')
+		/*
 		.pipe(svgmin(function (file) {
 			var prefix = path.basename(file.relative, path.extname(file.relative));
 			return {
@@ -19,6 +20,7 @@ gulp.task('svgstore', function () {
 				}]
 			}
 		}))
+		*/
 		.pipe(svgstore({ inlineSvg: true }))
 		.pipe(cheerio({
 			run: function ($) {
@@ -26,7 +28,7 @@ gulp.task('svgstore', function () {
 			},
 			parserOptions: { xmlMode: true }
 		}))
-		.pipe(rename('svg-symbols.svg'))
+		.pipe(rename('svg-symbols-yr.svg'))
 		.pipe(gulp.dest('.'));
 });
 

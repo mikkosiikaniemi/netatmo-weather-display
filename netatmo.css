@@ -529,11 +529,6 @@ svg[class*="icon-"] {
 	display: block;
 }
 
-.weather-symbol svg {
-	max-width: 100%;
-	max-height: 100%;
-}
-
 .forecast__data-point--weekday,
 .forecast__data-point--hour {
 	display: block;
