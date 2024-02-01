@@ -532,20 +532,31 @@ function print_yr_forecast() {
 		$forecast_scope = 'next_1_hours';
 
 		/**
-		 * Use 6-hour scope for two cases:
-		 * 1. if it's before 16 o'clock today → today's forecast between today
+		 * Use 6-hour scope for three cases:
+		 * 1. if it's before 9 o'clock today → today evening onwards.
+		 * 2. if it's between 9-16 o'clock today → today's forecast between today
 		 *    evening and tomorrow morning, and tomorrow afternoon onwards.
-		 * 2. if it's after 16 o'clock today → tomorrow night's forecast and
+		 * 3. if it's after 16 o'clock today → tomorrow night's forecast and
 		 *    tomorrow afternoon onwards.
 		 */
-		if ( time() < strtotime( 'today 16:00' ) ) {
-			if ( ( $datapoint_timestamp > strtotime( 'today 19:00' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00' ) ) {
-				$forecast_scope = 'next_6_hours';
-			}
-		} else {
-			if ( ( $datapoint_timestamp > strtotime( 'tomorrow 01:00' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00' ) ) {
-				$forecast_scope = 'next_6_hours';
-			}
+		$time_now = time();
+
+		switch( $time_now ) {
+			case $time_now < strtotime( 'today 9:00' ):
+				if ( $datapoint_timestamp > strtotime( 'today 19:00' ) ) {
+					$forecast_scope = 'next_6_hours';
+				}
+				break;
+			case $time_now < strtotime( 'today 16:00' ):
+				if ( ( $datapoint_timestamp > strtotime( 'today 19:00' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00' ) ) {
+					$forecast_scope = 'next_6_hours';
+				}
+				break;
+			default:
+				if ( ( $datapoint_timestamp > strtotime( 'tomorrow 01:00' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00' ) ) {
+					$forecast_scope = 'next_6_hours';
+				}
+				break;
 		}
 
 		if ( $forecast_scope === 'next_6_hours' ) {

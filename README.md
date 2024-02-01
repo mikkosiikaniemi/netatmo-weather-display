@@ -33,4 +33,4 @@ If you're using Local by Flywheel on Windows, the correct file is `php.ini.hbs` 
 
 Weather forecast from [Norwegian Meteorological Institute's developer API](https://developer.yr.no/doc/GettingStarted/).
 
-Icons from [Feather Icons](https://feathericons.com/). Weather symbols from [Finnish Meteorological Institute](https://www.ilmatieteenlaitos.fi/saamerkkien-selitykset).
+Icons from [Feather Icons](https://feathericons.com/). Weather symbols from [Yr](https://nrkno.github.io/yr-weather-symbols/).
