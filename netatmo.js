@@ -298,6 +298,18 @@
 			if( element_type === 'outdoor' ) {
 				$.plot(element_id, [
 					{
+						data: humidity_data,
+						color: 'rgba(41,171,226,0.2)',
+						yaxis: 3,
+						shadowSize: 0,
+						lines: {
+							show: true,
+							fill: false,
+							lineWidth: 2,
+							borderWidth: 1,
+						}
+					},
+					{
 						data: temperature_data_further,
 						color: "rgba(200, 20, 30, 0.3)",
 						threshold: {
@@ -353,6 +365,16 @@
 							position: 'right',
 							tickColor: 'rgba(240,240,240,0.2)',
 							alignTicksWithAxis: 1
+						},
+						{              // options for the third y-axis
+							min: 0,
+							max: 100,
+							tickDecimals: 0,
+							font: font_spec,
+							position: 'right',
+							tickColor: 'rgba(240,240,240,0.2)',
+							alignTicksWithAxis: 1,
+							minTickSize: 5,
 						}
 					],
 					grid: {
