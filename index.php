@@ -81,8 +81,6 @@ if ( isset( $_SESSION['state'] ) ) {
 
 <body class="dark-mode">
 
-	<?php require_once 'svg-symbols-yr.svg'; ?>
-
 	<div id="date-and-time" class="date-and-time padded">
 		<span id="date">Haetaan päiväystä...</span>
 		<div id="actions">
