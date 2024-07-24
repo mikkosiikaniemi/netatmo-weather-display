@@ -13,10 +13,6 @@ require 'vendor/autoload.php';
 // Start a PHP session to store the Netatmo API access token and such.
 session_start();
 
-// Set the correct timezone in order to print correctly formatted time
-date_default_timezone_set( 'Europe/Helsinki' );
-setlocale( LC_TIME, 'fi' );
-
 // Check if the obligatory configuration file exists.
 if ( false === file_exists( 'config.php' ) ) {
 	die( 'Konfiguraatiotiedostoa ei ole olemassa.' );
@@ -117,6 +113,7 @@ if ( isset( $_SESSION['state'] ) ) {
 
 	<div class="sunrise-sunset">
 		<?php
+			date_default_timezone_set( 'Europe/Helsinki' );
 			$sun_info        = date_sun_info( time(), LATITUDE, LONGITUDE );
 			$sunrise         = $sun_info['sunrise'];
 			$sunset          = $sun_info['sunset'];

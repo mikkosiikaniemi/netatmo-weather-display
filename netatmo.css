@@ -451,7 +451,7 @@ svg[class*="icon-"] {
 }
 
 .forecast__data-point--hmdy {
-	margin-top: 2px;
+	margin-top: 5px;
 	width: 100%;
 	height: 20px;
 	border-collapse: collapse;
@@ -467,10 +467,23 @@ svg[class*="icon-"] {
 	margin-right: 1px;
 	vertical-align: bottom;
 	padding: 0 1px;
+	position: relative;
 }
 
-.forecast__data-point--hmdy-bar>div {
+.forecast__data-point--hmdy-bar > div {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.forecast__data-point--hmdy-bar > .precipitation {
 	background-color: #0a95d7;
+}
+
+.forecast__data-point--hmdy-bar > .precipitation--max {
+	background-image: linear-gradient(-45deg, #0a95d7 20%, transparent 20%, transparent 50%, #0a95d7 50%, #0a95d7 70%, transparent 70%, transparent 100%);
+	background-size: 5px 5px;
 }
 
 .forecast__data-point--hmdy-bar .forecast__data-point--hmdy-bar__null {

@@ -28,6 +28,8 @@ DEFINE( 'NETATMO_UPDATE_INTERVAL', 10.5 * MINUTE_IN_SECONDS );
  */
 function print_temperatures() {
 
+	date_default_timezone_set( 'UTC' );
+
 	if ( $_SESSION['expires_in'] < time() ) {
 		refresh_token();
 	}
@@ -90,6 +92,8 @@ function print_temperatures() {
  * Get single module info
  */
 function get_module_info( $module, $rain_module = false ) {
+
+	date_default_timezone_set( 'Europe/Helsinki' );
 
 	if ( $module->type === 'NAMain' || $module->type === 'NAModule4' ) {
 		$module_type = 'indoor';
@@ -462,7 +466,7 @@ function get_yr_data() {
 	$forecast_json = array();
 
 	// Define the YR.no URL.
-	$yr_url = 'https://api.met.no/weatherapi/locationforecast/2.0/compact?altitude=' . ALTITUDE . '&lat=' . LATITUDE . '&lon=' . LONGITUDE;
+	$yr_url = 'https://api.met.no/weatherapi/locationforecast/2.0/complete?altitude=' . ALTITUDE . '&lat=' . LATITUDE . '&lon=' . LONGITUDE;
 
 	// Define User-Agent header for HTTP request as instructed by YR.
 	$options = array(
@@ -478,7 +482,7 @@ function get_yr_data() {
 
 	// If YR 'Expires' header is in the past, get new fresh data. Store in session.
 	if ( $_SESSION['forecast_expires'] < time() || empty( $_SESSION['forecast'] ) ) {
-		$forecast_json                = file_get_contents( 'https://api.met.no/weatherapi/locationforecast/2.0/compact?altitude=60&lat=' . LATITUDE . '&lon=' . LONGITUDE, false, $context );
+		$forecast_json                = file_get_contents( 'https://api.met.no/weatherapi/locationforecast/2.0/complete?altitude=60&lat=' . LATITUDE . '&lon=' . LONGITUDE, false, $context );
 		$_SESSION['forecast']         = $forecast_json;
 		$_SESSION['forecast_expires'] = strtotime( $yr_headers['Expires'] );
 	} else {
@@ -540,6 +544,8 @@ function print_yr_forecast() {
 		 */
 		$time_now = time();
 
+		date_default_timezone_set( 'UTC' );
+
 		switch( $time_now ) {
 			case $time_now < strtotime( 'today 9:00 Europe/Helsinki' ):
 				if ( $datapoint_timestamp > strtotime( 'today 19:00' ) ) {
@@ -547,7 +553,7 @@ function print_yr_forecast() {
 				}
 				break;
 			case $time_now < strtotime( 'today 16:00 Europe/Helsinki' ):
-				if ( ( $datapoint_timestamp > strtotime( 'today 21:00 Europe/Helsinki' ) && $datapoint_timestamp < strtotime( 'tomorrow 7:00 Europe/Helsinki' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00 Europe/Helsinki' ) ) {
+				if ( ( $datapoint_timestamp > strtotime( 'today 21:00 Europe/Helsinki' ) && $datapoint_timestamp < strtotime( 'tomorrow 7:00 Europe/Helsinki' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 12:00 Europe/Helsinki' ) ) {
 					$forecast_scope = 'next_6_hours';
 				}
 				break;
@@ -575,6 +581,8 @@ function print_yr_forecast() {
 		if ( isset( $data['data'][ $forecast_scope ] ) ) {
 			$forecast_data[ $index ]['symbol']        = $data['data'][ $forecast_scope ]['summary']['symbol_code'];
 			$forecast_data[ $index ]['precipitation'] = number_format( $data['data'][ $forecast_scope ]['details']['precipitation_amount'], 2 );
+			$forecast_data[ $index ]['precipitation_max'] = number_format( $data['data'][ $forecast_scope ]['details']['precipitation_amount_max'], 2 );
+			$forecast_data[ $index ]['precipitation_probability'] = number_format( $data['data'][ $forecast_scope ]['details']['probability_of_precipitation'], 2 );
 		}
 	}
 
@@ -737,16 +745,19 @@ function print_yr_forecast() {
 		// Precipitation output.
 		$output .= '<table class="forecast__data-point--hmdy"><tbody><tr>';
 
-		$precipitation_value = $data_point['precipitation'];
+		$precipitation_value       = $data_point['precipitation'];
+		$precipitation_max         = $data_point['precipitation_max'];
+		$precipitation_probability = $data_point['precipitation_probability'];
 
-		if ( false === is_numeric( $precipitation_value ) || $precipitation_value <= 0 ) {
+		if ( false === is_numeric( $precipitation_value ) || $precipitation_value <= 0 && $precipitation_max <= 0 ) {
 			$precipitation_value = 0;
 		}
 
-		$output .= '<td class="forecast__data-point--hmdy-bar" data-precipitation-value="' . $precipitation_value . '">';
+		$output .= '<td class="forecast__data-point--hmdy-bar" data-precipitation-value="' . $precipitation_value . '" data-precipitation-max-value="' . $precipitation_max . '" data-precipitation-probability="' . $precipitation_probability . '">';
 
-		if ( $precipitation_value > 0 ) {
-			$output .= '<div style="height:' . netatmo_calculate_precipitation_graph_height( $precipitation_value ) . 'px;"></div>';
+		if ( $precipitation_value > 0 || $precipitation_max > 0 ) {
+			$output .= '<div class="precipitation" style="height:' . netatmo_calculate_precipitation_graph_height( $precipitation_value ) . 'px;"></div>';
+			$output .= '<div class="precipitation--max" style="height:' . netatmo_calculate_precipitation_graph_height( $precipitation_max ) . 'px; opacity:' . $precipitation_probability / 80 . ';"></div>';
 		} else {
 			$output .= '<div class="forecast__data-point--hmdy-bar__null"></div>';
 		}
@@ -754,7 +765,8 @@ function print_yr_forecast() {
 		$output .= '</td>';
 
 		$output .= '</tr></tbody></table>';
-		$output .= '<span class="forecast__data-point--hmdy-value" data-precipitation-subtotal="' . $precipitation_value . '">' . round( $precipitation_value, 1 ) . '</span>';
+
+		$output .= '<span class="forecast__data-point--hmdy-value" data-precipitation-subtotal="' . $precipitation_value . '">' . number_format( max( $precipitation_value, $precipitation_max ), 1 ) . '</span>';
 
 		$output .= '<div class="forecast__data-point--wind" style="transform: rotate(' . $data_point['wind_from_direction'] . 'deg);"><span class="forecast__data-point--wind-value" style="transform: rotate(-' . $data_point['wind_from_direction'] . 'deg);">' . round( $data_point['wind_speed'] ) . '</span></div>';
 
