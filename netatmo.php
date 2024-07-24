@@ -1,5 +1,4 @@
 <?php
-
 require 'vendor/autoload.php';
 
 // Resume PHP session
@@ -7,8 +6,8 @@ if ( ! isset( $_SESSION ) ) {
 	session_start();
 }
 
-// Set the correct timezone in order to print correctly formatted time
-date_default_timezone_set( 'Europe/Helsinki' );
+// Set timezone to UTC to begin with.
+date_default_timezone_set('UTC');
 
 // Read client credentials from a config file
 require 'config.php';
@@ -162,7 +161,7 @@ function get_module_info( $module, $rain_module = false ) {
 				<span class="minmax__measurement"><?php echo number_format( $module->dashboard_data->min_temp, 1 ); ?>°</span>
 				<svg xmlns="http://www.w3.org/2000/svg" width="65.6" height="95" viewBox="0 0 65.6 95" class="icon-filled"><path d="M1.1 52.2L9 60.1l18.2-18.3V95h11.2V41.8l18.2 18.3 7.9-7.9-31.7-31.7zM0 0h65.6v11.1H0z"/></svg>
 				<span class="minmax__measurement"><?php echo number_format( $module->dashboard_data->max_temp, 1 ); ?>°
-				<?php if ( $rain_module->reachable === true ) : ?>
+				<?php if ( $rain_module->reachable === true ) : ?></span>
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" class="icon-stroked"><path d="M23 12a11.05 11.05 0 0 0-22 0zm-5 7a3 3 0 0 1-6 0v-7"></path></svg>
 				<span class="minmax__measurement"><?php echo $rain_module->dashboard_data->sum_rain_24; ?> mm</span>
 				<?php endif; ?>
@@ -542,25 +541,25 @@ function print_yr_forecast() {
 		$time_now = time();
 
 		switch( $time_now ) {
-			case $time_now < strtotime( 'today 9:00' ):
+			case $time_now < strtotime( 'today 9:00 Europe/Helsinki' ):
 				if ( $datapoint_timestamp > strtotime( 'today 19:00' ) ) {
 					$forecast_scope = 'next_6_hours';
 				}
 				break;
-			case $time_now < strtotime( 'today 16:00' ):
-				if ( ( $datapoint_timestamp > strtotime( 'today 19:00' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00' ) ) {
+			case $time_now < strtotime( 'today 16:00 Europe/Helsinki' ):
+				if ( ( $datapoint_timestamp > strtotime( 'today 21:00 Europe/Helsinki' ) && $datapoint_timestamp < strtotime( 'tomorrow 7:00 Europe/Helsinki' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00 Europe/Helsinki' ) ) {
 					$forecast_scope = 'next_6_hours';
 				}
 				break;
 			default:
-				if ( ( $datapoint_timestamp > strtotime( 'tomorrow 01:00' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00' ) ) {
+				if ( ( $datapoint_timestamp > strtotime( 'tomorrow 01:00 Europe/Helsinki' ) && $datapoint_timestamp < strtotime( 'tomorrow 8:00 Europe/Helsinki' ) ) || $datapoint_timestamp > strtotime( 'tomorrow 13:00 Europe/Helsinki' ) ) {
 					$forecast_scope = 'next_6_hours';
 				}
 				break;
 		}
 
 		if ( $forecast_scope === 'next_6_hours' ) {
-			if ( false === in_array( (int) date( 'H', $datapoint_timestamp ), array( 2, 8, 14, 20 ) ) ) {
+			if ( false === in_array( (int) date( 'H', $datapoint_timestamp ), array( 0, 6, 12, 18 ) ) ) {
 				continue;
 			}
 		}
@@ -703,6 +702,8 @@ function print_yr_forecast() {
 		}
 
 		$previous_data_point_hour = date( 'H', $data_point['time'] );
+
+		date_default_timezone_set( 'Europe/Helsinki' );
 
 		$output .= '<div class="forecast__data-point near-future';
 
