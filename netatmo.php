@@ -481,7 +481,7 @@ function get_yr_data() {
 	$yr_headers = get_headers( $yr_url, true, $context );
 
 	// If YR 'Expires' header is in the past, get new fresh data. Store in session.
-	if ( $_SESSION['forecast_expires'] < time() || empty( $_SESSION['forecast'] ) ) {
+	if ( isset( $_SESSION['forecast_expires'] ) && $_SESSION['forecast_expires'] < time() || empty( $_SESSION['forecast'] ) ) {
 		$forecast_json                = file_get_contents( 'https://api.met.no/weatherapi/locationforecast/2.0/complete?altitude=60&lat=' . LATITUDE . '&lon=' . LONGITUDE, false, $context );
 		$_SESSION['forecast']         = $forecast_json;
 		$_SESSION['forecast_expires'] = strtotime( $yr_headers['Expires'] );
