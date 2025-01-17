@@ -2,7 +2,7 @@
 
 A weather display web application for presenting temperature information gathered by locally installed [Netatmo weather sensors](https://www.netatmo.com/en-eu/weather/weatherstation).
 
-Optimized for 1<sup>st</sup> generation iPad. Using Chrome browser on iPad allows us to "hide" the browser chrome by tapping on the date. 
+Originally when development started, I optimized this for a 1<sup>st</sup> generation iPad. Using Chrome browser on iPad allows us to "hide" the browser chrome by tapping on the date. 
 
 ## Screenshot
 
@@ -18,7 +18,9 @@ Optimized for 1<sup>st</sup> generation iPad. Using Chrome browser on iPad allow
 ## Installation
 
 1. Clone the repository to web server.
-1. Rename `config.example.php` to `config.php` and adjust the definitions inside it.
+1. Run `npm install`.
+1. Run `composer install`.
+1. Rename `env.example` to `.env` and adjust the definitions inside it.
 1. Open the site on the server.
 
 ## Local development

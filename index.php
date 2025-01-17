@@ -39,7 +39,7 @@ DEFINE( 'NETATMO_UPDATE_INTERVAL', 10.5 * 60 );
 					<path d="M12 1v2m0 18v2M4.2 4.2l1.4 1.4m12.8 12.8 1.4 1.4M1 12h2m18 0h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>
 				</svg>
 				<svg xmlns="http://www.w3.org/2000/svg" data-class="light-mode" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="icon-stroked feather feather-moon" viewBox="0 0 24 24" style="display: none;">
-  				<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+					<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
 				</svg>
 			</button>
 			<form action="<?php echo basename( $_SERVER['PHP_SELF'] ); ?>" method="post">
@@ -83,19 +83,20 @@ DEFINE( 'NETATMO_UPDATE_INTERVAL', 10.5 * 60 );
 		<?php require 'get_weather.php'; ?>
 	</div>
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js" integrity="sha256-YcbK69I5IXQftf/mYD8WY0/KmEDCv1asggHpJk1trM8=" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js" integrity="sha256-LMe2LItsvOs1WDRhgNXulB8wFpq885Pib0bnrjETvfI=" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.min.js" integrity="sha256-gCrSjRo/Z6W7Cfc1oEL6BH8HKjgiiO+ItV8A+z9Scpw=" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.resize.min.js" integrity="sha256-EM0o7Qv7O213xqRbn8IFc6QsSr02kAX1/z7musSfxx8=" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.threshold.min.js" integrity="sha256-RgFycE5E183kX3Qvb9ogyMWG1Q/BaN1StpWF2sChHJw=" crossorigin="anonymous"></script>
+	<script src="node_modules/jquery/dist/jquery.min.js"></script>
+	<script src="node_modules/flot/jquery.flot.js"></script>
+	<script src="node_modules/flot/jquery.flot.time.js"></script>
+	<script src="node_modules/flot/jquery.flot.resize.js"></script>
+	<script src="node_modules/flot/jquery.flot.threshold.js"></script>
 	<script>
 		var netatmo = {
-			update_interval: <?php echo NETATMO_UPDATE_INTERVAL; ?>
+			update_interval: <?php echo NETATMO_UPDATE_INTERVAL; ?>,
+			session_expires_at: <?php echo isset($_SESSION['expires_at']) ? $_SESSION['expires_at'] : 0; ?>
 		};
 	</script>
 	<script src="netatmo.js?ver=<?php echo filemtime( 'netatmo.js' ); ?>"></script>
 	<?php else: ?>
-    <p><a href="auth.php">Kirjaudu sisään</a> nähdäksesi tiedot.</p>
-  <?php endif; ?>
+		<p><a href="auth.php">Kirjaudu sisään</a> nähdäksesi tiedot.</p>
+	<?php endif; ?>
 </body>
 </html>
