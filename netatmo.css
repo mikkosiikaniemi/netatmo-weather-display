@@ -122,7 +122,8 @@ body {
 	text-align: center;
 	font-weight: normal;
 	font-family: "Inter", sans-serif;
-	padding: 0 2vw;
+	padding: 0 2.5vw;
+	transition: all 100ms linear;
 }
 
 body.dark-mode {
@@ -483,6 +484,7 @@ svg[class*="icon-"] {
 	margin-bottom: .25rem;
 	background-color: #fff;
 	box-shadow: -3px 0 0 white, 3px 0 0 white;
+	transition: all 100ms linear;
 }
 
 .dark-mode .sunrise-sunset svg {
