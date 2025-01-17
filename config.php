@@ -36,8 +36,16 @@ if ( ! empty( $missingVariables ) ) {
 $client_id = $_ENV['CLIENT_ID'];
 $client_secret = $_ENV['CLIENT_SECRET'];
 
+// Check if the script is running in a subdirectory
+$subdirectory = dirname( $_SERVER['PHP_SELF'] );
+if ( ! empty( $subdirectory ) ) {
+	$subdirectory = rtrim( $subdirectory, '/' );
+} else {
+	$subdirectory = '';
+}
+
 // Dynamically determine the redirect URI.
-$redirect_uri = "https://$_SERVER[HTTP_HOST]" . dirname( $_SERVER['PHP_SELF'] ) . '/auth.php';
+$redirect_uri = "https://$_SERVER[HTTP_HOST]" . $subdirectory . '/auth.php';
 
 $provider = new GenericProvider([
     'clientId'                => $client_id,
