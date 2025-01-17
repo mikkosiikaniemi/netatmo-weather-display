@@ -2,7 +2,6 @@
 	'use strict';
 
 	var weekDays = ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"];
-	//var weekDays = ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"];
 
 	var updateInterval = netatmo.update_interval;
 	var updateInProgress = false;
@@ -27,7 +26,7 @@
 			const formattedSeconds = (currentSeconds < 10 ? "0" : "") + currentSeconds;
 
 			// Construct the date and time strings
-			const currentDateString = `${currentWeekDay} ${currentDay}.${currentMonth}`;
+			const currentDateString = `${currentWeekDay} ${currentDay}.${currentMonth}.`;
 			const currentTimeString = `${currentHours}:${formattedMinutes}:${formattedSeconds}`;
 
 			if (dateElement.innerText !== currentDateString) {
@@ -273,7 +272,7 @@
 			font_spec = {
 				size: 11,
 				lineHeight: 13,
-				family: "HelveticaNeue, sans-serif",
+				family: "Inter, sans-serif",
 				color: "#888888"
 			};
 
@@ -491,11 +490,44 @@
 		setInterval(updateTimeDifferences, 30000);
 
 		// Reload the whole page at interval
-		setTimeout( function() {
-			location.reload();
-		}, 3 * 60 * 60 * 1000 );
+		// setTimeout( function() {
+		// 	location.reload();
+		// }, 3 * 60 * 60 * 1000 );
 
 
 	});
 
 })(jQuery);
+
+document.addEventListener('DOMContentLoaded', () => {
+	const refreshTokenUrl = 'refreshToken.php';
+
+	// Function to check token expiration and refresh if needed
+	const checkAndRefreshToken = async () => {
+		const expiresAt = netatmo.session_expires_at;
+		const currentTime = Math.floor(Date.now() / 1000);
+
+		// If the token is about to expire (within 1 minute), refresh it
+		if (currentTime >= expiresAt - 60) {
+			try {
+				const response = await fetch(refreshTokenUrl, {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' }
+				});
+				const data = await response.json();
+
+				if (data.expires_at) {
+					console.log('Token refreshed. Reloading page...');
+					location.reload(); // Reload the page to fetch fresh data
+				} else {
+					console.error('Error refreshing token:', data.error);
+				}
+			} catch (error) {
+				console.error('Failed to refresh token:', error);
+			}
+		}
+	};
+
+	// Check token status every 30 seconds
+	setInterval(checkAndRefreshToken, 30000);
+});

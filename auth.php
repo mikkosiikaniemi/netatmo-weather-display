@@ -36,4 +36,4 @@ if (!isset($_SESSION['access_token'])) {
 }
 
 // Refresh the access token if needed
-refreshAccessToken($provider);
+refreshAccessTokenIfNeeded($provider);

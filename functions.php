@@ -11,23 +11,30 @@ define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
 
 // Save tokens to session
 function saveTokensToSession($accessToken) {
-    $_SESSION['access_token'] = $accessToken->getToken();
-    $_SESSION['refresh_token'] = $accessToken->getRefreshToken();
-    $_SESSION['expires_at'] = $accessToken->getExpires();
+	$_SESSION['access_token'] = $accessToken->getToken();
+	$_SESSION['refresh_token'] = $accessToken->getRefreshToken();
+	$_SESSION['expires_at'] = $accessToken->getExpires();
 }
 
-// Refresh access token
-function refreshAccessToken($provider) {
-    if (isset($_SESSION['expires_at']) && time() >= $_SESSION['expires_at']) {
-        try {
-            $accessToken = $provider->getAccessToken('refresh_token', [
-                'refresh_token' => $_SESSION['refresh_token']
-            ]);
-            saveTokensToSession($accessToken);
-        } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
-            die('Error refreshing token: ' . $e->getMessage());
-        }
-    }
+// Refresh the access token using the refresh token
+function refreshAccessTokenIfNeeded($provider) {
+	if (isset($_SESSION['expires_at']) && time() >= $_SESSION['expires_at'] - 60) {
+		try {
+			$accessToken = $provider->getAccessToken('refresh_token', [
+				'refresh_token' => $_SESSION['refresh_token']
+			]);
+
+			// Update session with new token details
+			saveTokensToSession($accessToken);
+
+			return true; // Token was refreshed
+		} catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+			// Handle error (e.g., log the error, force logout, etc.)
+			error_log('Error refreshing token: ' . $e->getMessage());
+			return false; // Failed to refresh token
+		}
+	}
+	return false; // Token is still valid
 }
 
 // Get weather data from Netatmo API
