@@ -2,8 +2,9 @@
 require_once 'config.php';
 require_once 'functions.php';
 
-if (!isset($_SESSION['refresh_token'])) {
-	echo json_encode(['error' => 'User not authenticated']);
+if ( ! isset($_SESSION['refresh_token'] ) ) {
+	error_log( 'Refresh token not set.' );
+	echo json_encode( ['error' => 'User not authenticated'] );
 	exit;
 }
 
@@ -17,8 +18,10 @@ $provider = new League\OAuth2\Client\Provider\GenericProvider([
 	'urlResourceOwnerDetails' => 'https://api.netatmo.com/api/getstationsdata'
 ]);
 
-if (refreshAccessTokenIfNeeded($provider)) {
-  echo json_encode(['expires_at' => $_SESSION['expires_at']]);
+if ( refreshAccessTokenIfNeeded( $provider ) ) {
+	error_log( 'Access token refreshed, set new expiration.' );
+  echo json_encode( ['expires_at' => $_SESSION['expires_at']] );
 } else {
-  echo json_encode(['error' => 'Failed to refresh token']);
+	error_log( 'Failed to refresh access token.' );
+  echo json_encode( ['error' => 'Failed to refresh token'] );
 }

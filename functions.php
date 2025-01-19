@@ -11,29 +11,35 @@ define( 'YEAR_IN_SECONDS', 365 * DAY_IN_SECONDS );
 
 // Save tokens to session
 function saveTokensToSession($accessToken) {
+	error_log( 'saveTokensToSession()' );
 	$_SESSION['access_token'] = $accessToken->getToken();
 	$_SESSION['refresh_token'] = $accessToken->getRefreshToken();
 	$_SESSION['expires_at'] = $accessToken->getExpires();
+	error_log( print_r( $_SESSION, true ) );
 }
 
 // Refresh the access token using the refresh token
-function refreshAccessTokenIfNeeded($provider) {
-	if (isset($_SESSION['expires_at']) && time() >= $_SESSION['expires_at'] - 60) {
+function refreshAccessTokenIfNeeded( $provider ) {
+	error_log( 'refreshAccessTokenIfNeeded()' );
+	if ( isset( $_SESSION['expires_at'] ) && time() >= $_SESSION['expires_at'] - 60 ) {
 		try {
+			error_log( 'Refresh access token.' );
 			$accessToken = $provider->getAccessToken('refresh_token', [
 				'refresh_token' => $_SESSION['refresh_token']
 			]);
 
+			error_log( 'Update session with new token details.' );
 			// Update session with new token details
-			saveTokensToSession($accessToken);
+			saveTokensToSession( $accessToken );
 
 			return true; // Token was refreshed
 		} catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
 			// Handle error (e.g., log the error, force logout, etc.)
-			error_log('Error refreshing token: ' . $e->getMessage());
+			error_log( 'Error refreshing token: ' . $e->getMessage() );
 			return false; // Failed to refresh token
 		}
 	}
+	error_log( 'Access token is still valid, not refreshing.' );
 	return false; // Token is still valid
 }
 
@@ -103,10 +109,8 @@ function print_temperatures( $stations ) {
 		$output .= '</div>';
 		$output .= '</div>';
 
-		// $output .= '<p class="data-time">Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
-		// $output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['expires_in'] ) . '.</p>';
-
-		$output .= print_yr_forecast();
+		$output .= '<p class="data-time">Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
+		$output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['expires_in'] ) . '.</p>';
 
 		return $output;
 	} else {

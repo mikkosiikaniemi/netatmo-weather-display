@@ -1,4 +1,5 @@
 <?php
+error_log( 'Logging out.' );
 session_start();
 session_unset();
 session_destroy();
