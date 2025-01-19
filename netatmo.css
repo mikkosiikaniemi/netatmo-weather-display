@@ -194,7 +194,7 @@ p {
 	padding-left: 0.25rem;
 	padding-right: 0.25rem;
 	text-align: center;
-	flex-grow: 1;
+	flex: 1;
 	font-size: 1.6rem;
 }
 
