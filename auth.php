@@ -5,7 +5,7 @@ require 'functions.php';
 // Handle the OAuth callback and store the token
 if (isset($_GET['code'])) {
 
-	error_log( 'We have code, getting access token.')
+	error_log( 'We have code, getting access token.');
 
 	try {
 		// Get the access token using the code from the callback
