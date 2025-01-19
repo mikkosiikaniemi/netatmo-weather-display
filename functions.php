@@ -110,7 +110,7 @@ function print_temperatures( $stations ) {
 		$output .= '</div>';
 
 		$output .= '<p class="data-time">Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
-		$output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['expires_in'] ) . '.</p>';
+		$output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['expires_at'] ) . '.</p>';
 
 		return $output;
 	} else {
