@@ -15,7 +15,12 @@ function saveTokensToSession($accessToken) {
 	$_SESSION['access_token'] = $accessToken->getToken();
 	$_SESSION['refresh_token'] = $accessToken->getRefreshToken();
 	$_SESSION['expires_at'] = $accessToken->getExpires();
-	error_log( print_r( $_SESSION, true ) );
+
+	// Make a copy of $_SESSION data. Unset forecast params.
+	$session = $_SESSION;
+	unset( $session['forecast'] );
+	unset( $session['forecast_expires'] );
+	error_log( print_r( $session, true ) );
 }
 
 // Refresh the access token using the refresh token
@@ -109,8 +114,8 @@ function print_temperatures( $stations ) {
 		$output .= '</div>';
 		$output .= '</div>';
 
-		$output .= '<p class="data-time">Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
-		$output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['expires_at'] ) . '.</p>';
+		// $output .= '<p class="data-time">Tiedot haettu ' . date( 'j.n.Y H:i:s' ) . '. ';
+		// $output .= 'Istunto vanhenee ' . date( 'j.n.Y H:i:s', $_SESSION['expires_at'] ) . '.</p>';
 
 		return $output;
 	} else {
