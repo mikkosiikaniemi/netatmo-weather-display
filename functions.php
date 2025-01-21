@@ -1,4 +1,8 @@
 <?php
+
+error_log( session_save_path() );
+
+session_name( 'netatmo-weather' );
 session_start();
 
 // Define time constants
