@@ -2,4 +2,10 @@
 <ruleset name="Mikrogramma Design">
 	<description>Custom PHP_CodeSniffer rules for WordPress projects by Mikrogramma Design.</description>
 	<rule ref="PSR1"/>
+	<rule ref="PSR12.ControlStructures.ControlStructureSpacing">
+  <properties>
+    <property name="indent" value="2" />
+  </properties>
+</rule>
+
 </ruleset>

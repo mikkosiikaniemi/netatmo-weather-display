@@ -1,5 +1,6 @@
 {
-    "require": {
-        "rugaard/oauth2-netatmo": "^1.0"
-    }
+	"require": {
+		"league/oauth2-client": "^2.7",
+		"vlucas/phpdotenv": "^5.6"
+	}
 }

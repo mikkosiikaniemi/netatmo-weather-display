@@ -17,5 +17,9 @@
   },
   "author": "Mikko Siikaniemi",
   "license": "ISC",
-  "homepage": "https://github.com/mikkosiikaniemi/netatmo-weather-display#readme"
+  "homepage": "https://github.com/mikkosiikaniemi/netatmo-weather-display#readme",
+  "dependencies": {
+    "flot": "0.8.3",
+    "jquery": "^3.7.1"
+  }
 }

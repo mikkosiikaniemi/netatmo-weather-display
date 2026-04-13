@@ -1,4 +1,3 @@
-config.php
-backup
+.env
 node_modules
 vendor

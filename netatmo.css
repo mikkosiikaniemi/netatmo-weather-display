@@ -77,22 +77,53 @@ td {
 	border: 0;
 }
 
+:root {
+	--module-gap: 2rem;
+}
+
 html {
 	font-size: 62.5%;
 	line-height: 1.15;
-	/* 1 */
-	-webkit-text-size-adjust: 100%;
-	/* 2 */
+  -moz-text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+/* inter-300 - latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300;
+  src: url('fonts/inter-v18-latin-300.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* inter-regular - latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  src: url('fonts/inter-v18-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* inter-700 - latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  src: url('fonts/inter-v18-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
 body {
 	font-size: 1.6rem;
-	max-width: 768px;
+	/* max-width: 768px; */
 	color: #222222;
 	margin: 0 auto;
 	text-align: center;
 	font-weight: normal;
-	font-family: "HelveticaNeue-Light", "PibotoLt", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	font-family: "Inter", sans-serif;
+	padding: 0 2.5vw;
+	transition: all 100ms linear;
 }
 
 body.dark-mode {
@@ -109,7 +140,6 @@ body.dark-mode {
 a,
 a:visited {
 	color: inherit;
-	text-decoration: none;
 }
 
 code,
@@ -135,9 +165,9 @@ p {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	font-size: 300%;
+	font-size: 4.5rem;
 	text-align: justify;
-	font-weight: 100;
+	font-weight: 300;
 	text-align: initial;
 	margin-bottom: 0;
 	padding-bottom: 3rem;
@@ -155,26 +185,34 @@ p {
 
 .modules {
 	font-size: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc( var(--module-gap) / 2 ) var(--module-gap);
 }
 
 .module {
-	padding-left: 2rem;
-	padding-right: 2rem;
+	padding-left: 0.25rem;
+	padding-right: 0.25rem;
 	text-align: center;
-	min-width: 256px;
-	width: 33.333%;
-	max-width: 33.333%;
-	display: inline-block;
+	flex: 1;
 	font-size: 1.6rem;
 }
 
+.module.padded {
+	padding-top: 2rem;
+	padding-bottom: 0rem;
+}
+
 .module-outdoor {
+	padding-left: 0;
+	padding-right: 0;
 	width: 100%;
 	max-width: 100%;
+	flex-basis: 100%;
 }
 
 .module__details--name {
-	text-transform: uppercase;
+	/* text-transform: uppercase; */
 	letter-spacing: .03em;
 	display: inline-block;
 	font-size: 110%;
@@ -210,9 +248,9 @@ p {
 }
 
 .module-outdoor .module__details--temp {
-	font-size: 1400%;
+	font-size: 1350%;
 	line-height: 1;
-	margin-top: -3%;
+	/* margin-top: -3%; */
 }
 
 .module-outdoor .module__details--temp-verycold {
@@ -227,9 +265,18 @@ p {
 	letter-spacing: .02em;
 }
 
+.module-indoor {
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+}
+
 .module-indoor .module__details--time,
 .module-indoor .module__details--time+span {
 	display: none;
+}
+
+.module-indoor .module__details--temp {
+	margin-top: .75rem;
 }
 
 .module-outdoor .module__details {
@@ -338,7 +385,8 @@ form {
 	display: inline-block;
 }
 
-button {
+button,
+.button {
 	-webkit-appearance: button;
 	border: 0;
 	padding: 1rem;
@@ -354,13 +402,16 @@ button {
 	height: 4rem;
 	transition: background-color 100ms ease-in-out;
 	color: #666;
+	display: inline-block;
 }
 
-button:hover {
+button:hover,
+.button:hover {
 	background-color: hsla(0, 0%, 20%, 0.2);
 }
 
-#actions button {
+#actions button,
+#actions .button {
 	transform: translateY(-0.5rem);
 }
 
@@ -381,7 +432,8 @@ button:hover {
 	animation-iteration-count: infinite;
 }
 
-.dark-mode button {
+.dark-mode button,
+.dark-mode .button {
 	color: #666;
 }
 
@@ -432,6 +484,7 @@ svg[class*="icon-"] {
 	margin-bottom: .25rem;
 	background-color: #fff;
 	box-shadow: -3px 0 0 white, 3px 0 0 white;
+	transition: all 100ms linear;
 }
 
 .dark-mode .sunrise-sunset svg {

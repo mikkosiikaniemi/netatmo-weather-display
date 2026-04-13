@@ -2,32 +2,47 @@
 	'use strict';
 
 	var weekDays = ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"];
-	//var weekDays = ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"];
 
 	var updateInterval = netatmo.update_interval;
 	var updateInProgress = false;
 
-	function updateClock() {
-		var currentTime = new Date();
+	const dateElement = document.getElementById('date');
+	const timeElement = document.getElementById('time');
 
-		var currentDay = currentTime.getDate();
-		//var currentMonthName = months[ currentTime.getMonth() ];
-		var currentMonth = currentTime.getMonth() + 1;
+	function startClock() {
+		function updateClock() {
+			var currentTime = new Date();
 
-		var currentYear = currentTime.getFullYear();
-		var currentWeekDay = weekDays[currentTime.getDay()];
+			var currentDay = currentTime.getDate();
+			var currentMonth = currentTime.getMonth() + 1;
+			const currentWeekDay = weekDays[currentTime.getDay()];
 
-		var currentHours = currentTime.getHours();
-		var currentMinutes = currentTime.getMinutes();
-		var currentSeconds = currentTime.getSeconds();
-		currentMinutes = (currentMinutes < 10 ? "0" : "") + currentMinutes;
-		currentSeconds = (currentSeconds < 10 ? "0" : "") + currentSeconds;
+			var currentHours = currentTime.getHours();
+			var currentMinutes = currentTime.getMinutes();
+			var currentSeconds = currentTime.getSeconds();
 
-		var currentDateString = currentWeekDay + ' ' + currentDay + '.' + currentMonth + '.';
-		var currentTimeString = currentHours + ":" + currentMinutes + ":" + currentSeconds;
+			// Format minutes and seconds
+			const formattedMinutes = (currentMinutes < 10 ? "0" : "") + currentMinutes;
+			const formattedSeconds = (currentSeconds < 10 ? "0" : "") + currentSeconds;
 
-		document.getElementById('date').innerText = currentDateString;
-		document.getElementById('time').innerText = currentTimeString;
+			// Construct the date and time strings
+			const currentDateString = `${currentWeekDay} ${currentDay}.${currentMonth}.`;
+			const currentTimeString = `${currentHours}:${formattedMinutes}:${formattedSeconds}`;
+
+			if (dateElement.innerText !== currentDateString) {
+				dateElement.innerText = currentDateString;
+			}
+
+			if (timeElement.innerText !== currentTimeString) {
+				timeElement.innerText = currentTimeString;
+			}
+
+			// Calculate the time to the next second boundary
+			const delay = 1000 - (new Date().getMilliseconds());
+			setTimeout(updateClock, delay);
+    }
+
+    updateClock(); // Start the clock
 	}
 
 	function updateTemperatures() {
@@ -39,7 +54,7 @@
 
 		var request = new XMLHttpRequest();
 		// Make an AJAX request to handler PHP file
-		request.open('GET', 'temperatures.php', true);
+		request.open('GET', 'get_weather.php', true);
 		request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
 
 		request.onload = function () {
@@ -257,7 +272,7 @@
 			font_spec = {
 				size: 11,
 				lineHeight: 13,
-				family: "HelveticaNeue, sans-serif",
+				family: "Inter, sans-serif",
 				color: "#888888"
 			};
 
@@ -451,7 +466,7 @@
 
 	$(function () {
 
-		updateClock();
+		startClock();
 
 		drawCharts();
 
@@ -471,16 +486,48 @@
 			}
 		});
 
-		setInterval(updateClock, 1000);
 		//setInterval(updateTemperatures, netatmo.update_interval * 1000);
 		setInterval(updateTimeDifferences, 30000);
 
 		// Reload the whole page at interval
-		setTimeout( function() {
-			location.reload();
-		}, 3 * 60 * 60 * 1000 );
+		// setTimeout( function() {
+		// 	location.reload();
+		// }, 3 * 60 * 60 * 1000 );
 
 
 	});
 
 })(jQuery);
+
+document.addEventListener('DOMContentLoaded', () => {
+	const refreshTokenUrl = 'refreshToken.php';
+
+	// Function to check token expiration and refresh if needed
+	const checkAndRefreshToken = async () => {
+		const expiresAt = netatmo.session_expires_at;
+		const currentTime = Math.floor(Date.now() / 1000);
+
+		// If the token is about to expire (within 1 minute), refresh it
+		if (currentTime >= expiresAt - 60) {
+			try {
+				const response = await fetch(refreshTokenUrl, {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' }
+				});
+				const data = await response.json();
+
+				if (data.expires_at) {
+					console.log('Token refreshed. Reloading page...');
+					location.reload(); // Reload the page to fetch fresh data
+				} else {
+					console.error('Error refreshing token:', data.error);
+				}
+			} catch (error) {
+				console.error('Failed to refresh token:', error);
+			}
+		}
+	};
+
+	// Check token status every 30 seconds
+	setInterval(checkAndRefreshToken, 30000);
+});
