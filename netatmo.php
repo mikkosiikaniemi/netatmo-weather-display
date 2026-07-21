@@ -34,6 +34,10 @@ function print_temperatures() {
 		refresh_token();
 	}
 
+	if ( empty( $_ENV['STATION_MAC'] ) ) {
+		throw new Exception( 'STATION_MAC puuttuu .env-tiedostosta.' );
+	}
+
 	$stations_query = http_build_query(
 		array(
 			'access_token' => $_SESSION['access_token'],

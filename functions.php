@@ -54,6 +54,10 @@ function refreshAccessTokenIfNeeded( $provider ) {
 
 // Get weather data from Netatmo API
 function getWeatherData($accessToken) {
+	if ( empty( $_ENV['STATION_MAC'] ) ) {
+		die( 'Virhe: STATION_MAC puuttuu .env-tiedostosta.' );
+	}
+
 	$query = http_build_query([
 		'device_id' => $_ENV['STATION_MAC'],
 	]);
