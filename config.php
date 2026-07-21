@@ -45,7 +45,15 @@ if ( ! empty( $subdirectory ) ) {
 }
 
 // Dynamically determine the redirect URI.
-$redirect_uri = "https://$_SERVER[HTTP_HOST]" . $subdirectory . '/auth.php';
+$is_https = (
+	( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off' ) ||
+	( isset( $_SERVER['SERVER_PORT'] ) && (int) $_SERVER['SERVER_PORT'] === 443 ) ||
+	( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' )
+);
+
+$scheme = $is_https ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
+$redirect_uri = $scheme . '://' . $host . $subdirectory . '/auth.php';
 
 $provider = new GenericProvider([
     'clientId'                => $client_id,
