@@ -34,7 +34,14 @@ function print_temperatures() {
 		refresh_token();
 	}
 
-	$api_url = 'https://api.netatmo.com/api/getstationsdata?access_token=' . $_SESSION['access_token'];
+	$stations_query = http_build_query(
+		array(
+			'access_token' => $_SESSION['access_token'],
+			'device_id'    => $_ENV['STATION_MAC'],
+		)
+	);
+
+	$api_url = 'https://api.netatmo.com/api/getstationsdata?' . $stations_query;
 
 	$remote_data = file_get_contents( $api_url );
 

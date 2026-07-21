@@ -54,7 +54,11 @@ function refreshAccessTokenIfNeeded( $provider ) {
 
 // Get weather data from Netatmo API
 function getWeatherData($accessToken) {
-	$url = "https://api.netatmo.com/api/getstationsdata";
+	$query = http_build_query([
+		'device_id' => $_ENV['STATION_MAC'],
+	]);
+
+	$url = "https://api.netatmo.com/api/getstationsdata?{$query}";
 
 	$headers = [
 		"Authorization: Bearer {$accessToken->getToken()}"
