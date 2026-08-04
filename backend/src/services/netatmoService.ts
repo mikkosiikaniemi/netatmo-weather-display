@@ -58,12 +58,14 @@ export class NetatmoService {
   private historyCache = new Map<string, CacheEntry<StationHistoryResponse>>();
   private forecastCache = new Map<string, CacheEntry<ForecastResponse>>();
   private cacheTtlMs: number;
+  private historyTimeZone: string;
   private netatmoRetryAttempts: number;
   private netatmoRetryBaseDelayMs: number;
 
   constructor() {
     const cacheTtlMinutes = Number(process.env.CACHE_TTL_MINUTES || 5);
     this.cacheTtlMs = cacheTtlMinutes * 60 * 1000;
+    this.historyTimeZone = this.resolveHistoryTimeZone(process.env.HISTORY_TIMEZONE || 'Europe/Helsinki');
     this.netatmoRetryAttempts = Math.max(1, Number(process.env.NETATMO_RETRY_ATTEMPTS || 4));
     this.netatmoRetryBaseDelayMs = Math.max(250, Number(process.env.NETATMO_RETRY_BASE_DELAY_MS || 1000));
   }
@@ -320,8 +322,8 @@ export class NetatmoService {
 
   private async buildModuleHistory(session: SessionData, stationId: string, module: NetatmoModule, rainModule: NetatmoModule | null): Promise<ModuleHistory> {
     const type = this.mapModuleType(module.type);
-    const startOfTodayUnix = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
-    const startYesterdayUnix = startOfTodayUnix - 24 * 60 * 60;
+    const startOfTodayUnix = this.getStartOfDayUnix(this.historyTimeZone, 0);
+    const startYesterdayUnix = this.getStartOfDayUnix(this.historyTimeZone, -1);
 
     const temperatureParams: Record<string, string> = {
       device_id: stationId,
@@ -448,6 +450,67 @@ export class NetatmoService {
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
     });
+  }
+
+  private resolveHistoryTimeZone(candidate: string): string {
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: candidate }).format(new Date());
+      return candidate;
+    } catch (_error) {
+      console.warn('[netatmoService] Invalid HISTORY_TIMEZONE, falling back to Europe/Helsinki', {
+        historyTimeZone: candidate,
+      });
+      return 'Europe/Helsinki';
+    }
+  }
+
+  private getStartOfDayUnix(timeZone: string, dayOffset: number): number {
+    const zonedNow = this.getZonedDateParts(new Date(), timeZone);
+    const nominalUtcMidnightMs = Date.UTC(zonedNow.year, zonedNow.month - 1, zonedNow.day + dayOffset, 0, 0, 0);
+    const offsetMinutes = this.getTimeZoneOffsetMinutes(new Date(nominalUtcMidnightMs), timeZone);
+    return Math.floor((nominalUtcMidnightMs - offsetMinutes * 60 * 1000) / 1000);
+  }
+
+  private getTimeZoneOffsetMinutes(date: Date, timeZone: string): number {
+    const zoned = this.getZonedDateParts(date, timeZone, true);
+    const asUtcMs = Date.UTC(zoned.year, zoned.month - 1, zoned.day, zoned.hour, zoned.minute, zoned.second);
+    return Math.round((asUtcMs - date.getTime()) / (60 * 1000));
+  }
+
+  private getZonedDateParts(date: Date, timeZone: string, includeTime: boolean = false): {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+  } {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: includeTime ? '2-digit' : undefined,
+      minute: includeTime ? '2-digit' : undefined,
+      second: includeTime ? '2-digit' : undefined,
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(date);
+    const mapped = parts.reduce((acc, part) => {
+      if (part.type !== 'literal') {
+        acc[part.type] = part.value;
+      }
+      return acc;
+    }, {} as Record<string, string>);
+
+    return {
+      year: Number(mapped.year || 0),
+      month: Number(mapped.month || 1),
+      day: Number(mapped.day || 1),
+      hour: Number(mapped.hour || 0),
+      minute: Number(mapped.minute || 0),
+      second: Number(mapped.second || 0),
+    };
   }
 
   private mapStationSummary(device: NetatmoDevice): StationSummary {

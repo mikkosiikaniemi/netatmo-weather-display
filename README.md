@@ -59,6 +59,7 @@ SESSION_SECRET=your-long-random-secret
 NETATMO_CLIENT_ID=...
 NETATMO_CLIENT_SECRET=...
 NETATMO_REDIRECT_URI=https://your-domain.com/auth/callback
+HISTORY_TIMEZONE=Europe/Helsinki
 # Optional forecast location override (otherwise first Netatmo station location is used)
 # FORECAST_LAT=60.192059
 # FORECAST_LON=24.945831
