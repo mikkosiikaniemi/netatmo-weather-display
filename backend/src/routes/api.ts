@@ -44,6 +44,25 @@ router.get('/weather/:stationId/history', async (req, res, next) => {
   }
 });
 
+router.get('/forecast', async (req, res, next) => {
+  try {
+    const sessionId = getSessionId(req);
+    const session = getSession(req);
+
+    if (!sessionId || !session || !session.accessToken) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const activeSession = await ensureFreshSession(sessionId, session);
+    const payload = await netatmoService.getForecast(activeSession);
+
+    res.json(payload);
+  } catch (error) {
+    next(error);
+  }
+});
+
 async function ensureFreshSession(sessionId: string, session: any) {
   if (!tokenNeedsRefresh(session)) {
     return session;
@@ -51,7 +70,6 @@ async function ensureFreshSession(sessionId: string, session: any) {
 
   const refreshed = await refreshSessionToken(session);
   saveSession(sessionId, refreshed);
-  netatmoService.clearCache();
 
   return refreshed;
 }

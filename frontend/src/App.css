@@ -1,1 +1,116 @@
 /* App-specific styles */
+
+.forecast__data-point--wind {
+	display: grid;
+	place-items: center;
+	font-size: 0.9rem;
+	width: min(58%, 2.4rem);
+	aspect-ratio: 1 / 1;
+	min-width: 1.6rem;
+	text-align: center;
+	position: relative;
+	margin-top: 0.5rem;
+	margin-left: auto;
+	margin-right: auto;
+	line-height: 1;
+	--wind-direction: 0deg;
+}
+
+.forecast__data-point--wind:after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border: 2px solid hsla(0, 0%, 50%, 0.4);
+	border-radius: 58% 58% 58% 0;
+	transform: rotate(calc(-45deg + var(--wind-direction)));
+	pointer-events: none;
+}
+
+.forecast__data-point--wind-value {
+	display: block;
+	position: relative;
+	z-index: 1;
+	color: hsla(0, 0%, 88%, 0.6);
+	font-weight: 600;
+}
+
+.forecast__rain-block {
+	height: 2.1rem;
+	width: 100%;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	position: relative;
+	padding-bottom: 0.1rem;
+}
+
+.forecast__rain-block::before {
+	content: '';
+	position: absolute;
+	left: 10%;
+	right: 10%;
+	bottom: 0;
+	height: 1px;
+	background: hsla(196, 100%, 66%, 0.42);
+}
+
+.forecast__rain-bar {
+	position: relative;
+	width: 84%;
+	height: var(--rain-height, 0%);
+	min-height: 0;
+	border-radius: 0.18rem 0.18rem 0 0;
+	background: hsla(199, 100%, 62%, 0.2);
+	box-shadow: 0 0 0 1px hsla(197, 100%, 64%, 0.24) inset;
+	transition: height 220ms ease-out;
+	overflow: hidden;
+	opacity: var(--rain-opacity, 1);
+}
+
+.forecast__rain-bar::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: var(--rain-base-height, 0%);
+	background: linear-gradient(180deg, hsla(196, 100%, 74%, 0.99), hsla(199, 100%, 50%, 0.96));
+}
+
+.forecast__rain-bar::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: var(--rain-base-height, 0%);
+	background: repeating-linear-gradient(-45deg, hsla(199, 98%, 90%, 0.75) 0 3px, hsla(199, 98%, 90%, 0) 3px 6px);
+	opacity: 0.95;
+}
+
+.forecast__rain-value {
+	margin-top: 0.15rem;
+	min-height: 1rem;
+	font-size: 0.72rem;
+	line-height: 1;
+	color: hsla(197, 100%, 60%, 0.98);
+	font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 900px) {
+	.outdoor-overview-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+	}
+
+	.outdoor-chart-panel {
+		grid-column: span 2 / span 2;
+	}
+
+	.indoor-modules-grid {
+		grid-template-columns: repeat(var(--indoor-modules-count, 1), minmax(0, 1fr)) !important;
+	}
+
+	.forecast-grid {
+		grid-template-columns: repeat(var(--forecast-points-count, 1), minmax(0, 1fr)) !important;
+	}
+}

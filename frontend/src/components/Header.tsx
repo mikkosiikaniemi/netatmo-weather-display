@@ -26,9 +26,6 @@ function Header(props: HeaderProps) {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Netatmo Weather
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Scope: {props.authStatus.user && props.authStatus.user.scope ? props.authStatus.user.scope : 'read_station'}
-            </p>
           </div>
           <div className="flex items-center gap-3">
             <button

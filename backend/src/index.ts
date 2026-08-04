@@ -1,6 +1,7 @@
 import express = require('express');
 import cookieParser = require('cookie-parser');
 import cors = require('cors');
+import path = require('path');
 import authRoutes = require('./routes/auth');
 import apiRoutes = require('./routes/api');
 
@@ -29,13 +30,40 @@ app.get('/health', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/api', apiRoutes);
 
+if (process.env.NODE_ENV === 'production') {
+  const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
+
+  app.use(express.static(frontendDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/auth') || req.path === '/health') {
+      next();
+      return;
+    }
+
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+}
+
 // Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
+  const status = err && err.status
+    ? err.status
+    : err && err.response && err.response.status
+      ? err.response.status
+      : 500;
+  const message = err && err.message ? err.message : 'Unexpected error';
+
+  console.error('Error:', {
+    method: req.method,
+    path: req.path,
+    status,
+    message,
+  });
+
+  res.status(status).json({
     error: process.env.NODE_ENV === 'production'
       ? 'Internal Server Error'
-      : err.message,
+      : message,
   });
 });
 

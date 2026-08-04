@@ -23,6 +23,9 @@ export interface ModuleSummary {
 export interface StationSummary {
   id: string;
   name: string;
+  latitude: number | null;
+  longitude: number | null;
+  altitude: number | null;
   modules: ModuleSummary[];
 }
 
@@ -35,6 +38,7 @@ export interface ModuleHistory {
   moduleId: string;
   moduleName: string;
   moduleType: WeatherModuleType;
+  historyFetchFailed: boolean;
   recentTemperatures: WeatherPoint[];
   earlierTemperatures: WeatherPoint[];
   humidity: WeatherPoint[];
@@ -49,5 +53,26 @@ export interface StationHistoryResponse {
   fetchedAt: string;
   stationId: string;
   stationName: string;
+  usedCachedFallback: boolean;
+  failedModuleIds: string[];
   modules: ModuleHistory[];
+}
+
+export interface ForecastPoint {
+  timestamp: number;
+  airTemperature: number;
+  windSpeed: number;
+  windFromDirection: number;
+  symbolCode: string;
+  precipitationAmount: number;
+  precipitationAmountMax: number;
+  precipitationProbability: number;
+}
+
+export interface ForecastResponse {
+  fetchedAt: string;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+  hourly: ForecastPoint[];
 }

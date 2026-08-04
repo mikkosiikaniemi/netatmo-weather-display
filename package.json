@@ -1,6 +1,6 @@
 {
   "name": "netatmo",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "A weather display web application for presenting temperature information gathered by locally installed Netatmo weather sensors.",
   "main": "build-svg.js",
   "devDependencies": {
@@ -9,7 +9,11 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:svg": "node build-svg.js"
+    "build:svg": "node build-svg.js",
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install",
+    "build": "npm run build:svg && npm --prefix frontend run build && npm --prefix backend run build",
+    "start": "npm --prefix backend run start",
+    "deploy": "npm run install:all && npm run build && npm run start"
   },
   "repository": {
     "type": "git",
@@ -18,8 +22,5 @@
   "author": "Mikko Siikaniemi",
   "license": "ISC",
   "homepage": "https://github.com/mikkosiikaniemi/netatmo-weather-display#readme",
-  "dependencies": {
-    "flot": "0.8.3",
-    "jquery": "^3.7.1"
-  }
+  "dependencies": {}
 }

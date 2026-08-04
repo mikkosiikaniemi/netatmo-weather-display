@@ -17,6 +17,9 @@ interface HistoryChartsProps {
   modules: ModuleHistory[]
 }
 
+const TEMP_COLOR = '#ff3b30'
+const HUMIDITY_COLOR = '#00b8ff'
+
 function formatTime(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString([], {
     hour: '2-digit',
@@ -63,12 +66,12 @@ function HistoryCharts(props: HistoryChartsProps) {
                 <LineChart data={climateData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.25)" />
                   <XAxis dataKey="time" minTickGap={24} stroke="#94a3b8" />
-                  <YAxis yAxisId="temp" stroke="#ef4444" domain={["auto", "auto"]} />
-                  <YAxis yAxisId="humidity" orientation="right" stroke="#0ea5e9" domain={["auto", "auto"]} />
+                  <YAxis yAxisId="temp" stroke={TEMP_COLOR} domain={["auto", "auto"]} />
+                  <YAxis yAxisId="humidity" orientation="right" stroke={HUMIDITY_COLOR} domain={["auto", "auto"]} />
                   <Tooltip />
                   <Legend />
-                  <Line yAxisId="temp" type="monotone" dataKey="temperature" name="Temperature °C" stroke="#ef4444" strokeWidth={2} dot={false} connectNulls={false} />
-                  <Line yAxisId="humidity" type="monotone" dataKey="humidity" name="Humidity %" stroke="#0ea5e9" strokeWidth={2} dot={false} connectNulls={false} />
+                  <Line yAxisId="temp" type="monotone" dataKey="temperature" name="Temperature °C" stroke={TEMP_COLOR} strokeWidth={2} dot={false} connectNulls={false} />
+                  <Line yAxisId="humidity" type="monotone" dataKey="humidity" name="Humidity %" stroke={HUMIDITY_COLOR} strokeWidth={2} dot={false} connectNulls={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -79,10 +82,10 @@ function HistoryCharts(props: HistoryChartsProps) {
                   <BarChart data={rainData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.25)" />
                     <XAxis dataKey="time" minTickGap={24} stroke="#94a3b8" />
-                    <YAxis stroke="#38bdf8" domain={[0, 'auto']} />
+                    <YAxis stroke={HUMIDITY_COLOR} domain={[0, 'auto']} />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="rain" name="Rain mm" fill="#38bdf8" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="rain" name="Rain mm" fill={HUMIDITY_COLOR} radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
