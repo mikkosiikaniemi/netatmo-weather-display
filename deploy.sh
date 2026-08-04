@@ -14,7 +14,11 @@ echo "[deploy] App root: $APP_ROOT"
 
 if command -v scl_source >/dev/null 2>&1; then
   # Opalstack commonly provides Node via software collections.
-  source scl_source enable nodejs20
+  set +u
+  if ! source scl_source enable nodejs20; then
+    echo "[deploy] Warning: failed to enable nodejs20 via scl_source; using default Node environment"
+  fi
+  set -u
 fi
 
 cd "$SCRIPT_DIR"
