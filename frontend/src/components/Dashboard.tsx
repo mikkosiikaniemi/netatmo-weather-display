@@ -226,9 +226,9 @@ function Dashboard(props: DashboardProps) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-black text-zinc-100">
       <div className="mx-auto w-full max-w-7xl px-4 py-4">
-        <section className="rounded-2xl bg-zinc-800/70 p-5">
+        <section className="rounded-2xl bg-zinc-950 p-5">
           <div className="grid gap-4 md:grid-cols-[auto_auto_auto] md:items-start">
             <p className="text-6xl font-normal tracking-tight text-zinc-50">{formatDate(now)}</p>
             <div className="relative flex items-center gap-2 md:justify-center md:self-center">
@@ -271,7 +271,7 @@ function Dashboard(props: DashboardProps) {
                 </svg>
               </button>
               {isMetaOpen ? (
-                <div className="absolute right-0 top-full z-20 mt-2 w-[min(92vw,22rem)] rounded-xl border border-zinc-700 bg-zinc-900/95 p-3 text-sm text-zinc-200 shadow-xl backdrop-blur">
+                <div className="absolute right-0 top-full z-20 mt-2 w-[min(92vw,22rem)] rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm text-zinc-200 shadow-xl backdrop-blur">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Info</p>
                   <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
                     <span className="text-zinc-400">Sunrise</span>
@@ -297,7 +297,7 @@ function Dashboard(props: DashboardProps) {
         <div className="mt-4">
           {outdoorModule ? (
             <div className="outdoor-overview-grid grid grid-cols-1 gap-4">
-              <div className="rounded-xl bg-zinc-800/70 p-5">
+              <div className="rounded-xl bg-zinc-950 p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2">
                     <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(outdoorModule.lastSeenAt)}>{outdoorModule.name}</p>
@@ -322,7 +322,7 @@ function Dashboard(props: DashboardProps) {
                 <p className="text-zinc-300">Rain 24h: {outdoorModule.rainLast24Hours !== null ? outdoorModule.rainLast24Hours + ' mm' : '--'}</p>
               </div>
 
-              <div className="outdoor-chart-panel rounded-xl bg-zinc-800/70 p-4 pb-2">
+              <div className="outdoor-chart-panel rounded-xl bg-zinc-950 p-4 pb-2">
                 {outdoorChartData.length > 0 ? (
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
@@ -395,7 +395,7 @@ function Dashboard(props: DashboardProps) {
               const modulePreviousDayChartData = moduleHistory ? mapPreviousDayTemperatureSeries(moduleHistory) : []
 
               return (
-              <article key={module.id} className="rounded-xl bg-zinc-800/70 p-5 pb-2">
+              <article key={module.id} className="rounded-xl bg-zinc-950 p-5 pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-start gap-2">
                     <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(module.lastSeenAt)}>{module.name}</p>
@@ -500,7 +500,7 @@ function Dashboard(props: DashboardProps) {
           {forecastQuery.isLoading ? <p className="mt-3 text-zinc-400">Loading forecast...</p> : null}
           {forecastQuery.isError ? <p className="mt-3 text-rose-300">Forecast unavailable right now.</p> : null}
           {forecastQuery.data ? (
-            <div className="forecast-grid rounded-lg bg-zinc-800/70 p-3 mt-4 grid grid-cols-2" style={forecastGridStyle}>
+            <div className="forecast-grid rounded-lg bg-zinc-950 p-3 mt-4 grid grid-cols-2" style={forecastGridStyle}>
               {forecastPoints.map((point) => {
                 const symbolId = resolveYrSymbolId(point.symbolCode)
                 const precipitationAmount = Math.max(0, point.precipitationAmount)
