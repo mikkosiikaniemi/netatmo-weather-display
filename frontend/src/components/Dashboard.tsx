@@ -228,7 +228,7 @@ function Dashboard(props: DashboardProps) {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <div className="mx-auto w-full max-w-7xl px-4 py-4">
-        <section className="rounded-2xl bg-zinc-900/85 p-6 ring-1 ring-zinc-800">
+        <section className="rounded-2xl bg-zinc-800/70 p-5">
           <div className="grid gap-4 md:grid-cols-[auto_auto_auto] md:items-start">
             <p className="text-6xl font-normal tracking-tight text-zinc-50">{formatDate(now)}</p>
             <div className="relative flex items-center gap-2 md:justify-center md:self-center">
@@ -299,22 +299,30 @@ function Dashboard(props: DashboardProps) {
             <div className="outdoor-overview-grid grid grid-cols-1 gap-4">
               <div className="rounded-xl bg-zinc-800/70 p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(outdoorModule.lastSeenAt)}>{outdoorModule.name}</p>
-                  {outdoorHistoryFetchFailed ? (
-                    <HistoryWarningIcon message="Outdoor history fetch failed. Showing last cached values." />
-                  ) : null}
+                  <div className="flex items-start gap-2">
+                    <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(outdoorModule.lastSeenAt)}>{outdoorModule.name}</p>
+                    {outdoorHistoryFetchFailed ? (
+                      <HistoryWarningIcon message="Outdoor history fetch failed. Showing last cached values." />
+                    ) : null}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-zinc-300" title={outdoorModule.humidity !== null ? 'Humidity: ' + outdoorModule.humidity + '%' : 'Humidity unavailable'}>
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
+                    </svg>
+                    <span>{outdoorModule.humidity !== null ? outdoorModule.humidity + '%' : '--'}</span>
+                  </div>
                 </div>
                 <p className="mt-2 text-9xl font-bold leading-none text-zinc-100">
                   <TemperatureReading value={outdoorModule.temperature} />
                 </p>
-                <p className="mt-4 text-zinc-300">Humidity: {outdoorModule.humidity !== null ? outdoorModule.humidity + '%' : '--'}</p>
+
                 <p className="text-zinc-300">
                   Min / Max: {outdoorModule.minTemperature !== null ? outdoorModule.minTemperature.toFixed(1) : '--'}° / {outdoorModule.maxTemperature !== null ? outdoorModule.maxTemperature.toFixed(1) : '--'}°
                 </p>
                 <p className="text-zinc-300">Rain 24h: {outdoorModule.rainLast24Hours !== null ? outdoorModule.rainLast24Hours + ' mm' : '--'}</p>
               </div>
 
-              <div className="outdoor-chart-panel rounded-xl bg-zinc-800/70 p-4">
+              <div className="outdoor-chart-panel rounded-xl bg-zinc-800/70 p-4 pb-2">
                 {outdoorChartData.length > 0 ? (
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
@@ -554,9 +562,8 @@ function formatDate(value: Date) {
   const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1)
   const day = value.getDate()
   const month = value.getMonth() + 1
-  const year = value.getFullYear()
 
-  return `${capitalizedWeekday} ${day}.${month}.${year}`
+  return `${capitalizedWeekday} ${day}.${month}.`
 }
 
 function TemperatureReading(props: { value: number | null }) {
