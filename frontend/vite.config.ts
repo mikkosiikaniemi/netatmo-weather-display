@@ -3,6 +3,13 @@ import reactPlugin from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [reactPlugin()],
+  build: {
+    rolldownOptions: {
+      checks: {
+        pluginTimings: false,
+      },
+    },
+  },
   server: {
     port: 5173,
     strictPort: true,
