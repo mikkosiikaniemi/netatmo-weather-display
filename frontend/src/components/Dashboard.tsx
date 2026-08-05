@@ -321,14 +321,48 @@ function Dashboard(props: DashboardProps) {
                     <span>{outdoorModule.humidity !== null ? outdoorModule.humidity + '%' : '--'}</span>
                   </div>
                 </div>
-                <p className="mt-2 text-9xl font-bold leading-none text-zinc-100">
+                <p className="mt-2 text-[8rem] font-bold leading-none text-zinc-100 text-center">
                   <TemperatureReading value={outdoorModule.temperature} />
                 </p>
 
-                <p className="text-zinc-300">
-                  Min / Max: {outdoorModule.minTemperature !== null ? outdoorModule.minTemperature.toFixed(1) : '--'}° / {outdoorModule.maxTemperature !== null ? outdoorModule.maxTemperature.toFixed(1) : '--'}°
-                </p>
-                <p className="text-zinc-300">Rain 24h: {outdoorModule.rainLast24Hours !== null ? outdoorModule.rainLast24Hours + ' mm' : '--'}</p>
+                <div className="mt-2 flex items-center justify-center gap-4 text-sm text-zinc-300">
+                  <span
+                    className="inline-flex items-center gap-1"
+                    title={
+                      'Min: ' +
+                      (outdoorModule.minTemperature !== null ? outdoorModule.minTemperature.toFixed(1) + '°' : '--')
+                    }
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M7 10 12 15 17 10" />
+                    </svg>
+                    <span>{outdoorModule.minTemperature !== null ? outdoorModule.minTemperature.toFixed(1) + '°' : '--'}</span>
+                  </span>
+                  <span
+                    className="inline-flex items-center gap-1"
+                    title={
+                      'Max: ' +
+                      (outdoorModule.maxTemperature !== null ? outdoorModule.maxTemperature.toFixed(1) + '°' : '--')
+                    }
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M7 14 12 9l5 5" />
+                    </svg>
+                    <span>{outdoorModule.maxTemperature !== null ? outdoorModule.maxTemperature.toFixed(1) + '°' : '--'}</span>
+                  </span>
+                  <span
+                    className="inline-flex items-center gap-1"
+                    title={
+                      'Rain 24h: ' +
+                      (outdoorModule.rainLast24Hours !== null ? outdoorModule.rainLast24Hours + ' mm' : '--')
+                    }
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
+                    </svg>
+                    <span>{outdoorModule.rainLast24Hours !== null ? outdoorModule.rainLast24Hours + ' mm' : '--'}</span>
+                  </span>
+                </div>
               </div>
 
               <div className="outdoor-chart-panel rounded-xl bg-zinc-950 p-4 pb-2">
@@ -437,7 +471,7 @@ function Dashboard(props: DashboardProps) {
                     ></span>
                   </div>
                 </div>
-                <p className="mt-2 text-7xl font-bold leading-none">
+                <p className="mt-2 text-7xl font-bold leading-none text-center">
                   <TemperatureReading value={module.temperature} />
                 </p>
 
