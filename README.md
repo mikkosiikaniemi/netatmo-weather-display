@@ -7,6 +7,16 @@ A weather display web application for presenting temperature information gathere
 
 ![Screenshot of the Netatmo Weather Display](screenshot.png)
 
+## Key technologies
+
+- Frontend: React + TypeScript with Vite.
+- State/data fetching: React Query + Axios.
+- Visualization: Recharts for historical charts.
+- Styling: Tailwind CSS (with PostCSS/Autoprefixer) and custom CSS.
+- Backend API: Node.js + Express + TypeScript.
+- Integrations: Netatmo API (OAuth2 + station data), Yr weather forecast API, and sunrise/sunset calculation based on coordinates.
+- Deployment: one-command Bash deployment via `deploy.sh` (builds frontend and backend, then runs the backend that serves static frontend files in production).
+
 ## Requirements
 
 1. [Netatmo weather station](https://www.netatmo.com/en-eu/weather/weatherstation) — you will need the [MAC address of the big module](https://helpcenter.netatmo.com/en-us/smart-home-weather-station-and-accessories/product-interactions/how-do-i-find-my-products-serial-number-or-its-mac-address). My setup consists of big module and three additional modules, thus the app is optimized for the amount.
@@ -102,3 +112,9 @@ APP_ROOT=~/apps/netatmo bash deploy.sh
 Weather forecast from [Norwegian Meteorological Institute's developer API](https://developer.yr.no/doc/GettingStarted/).
 
 Icons from [Feather Icons](https://feathericons.com/). Weather symbols from [Yr](https://nrkno.github.io/yr-weather-symbols/).
+
+## Design assets
+
+- Source design files that are not served by the app are stored under `design/`.
+- Favicon source file: `design/favicon/apple-touch-icon.ai`.
+- Runtime favicon file served by Vite: `frontend/public/apple-touch-icon.png`.
