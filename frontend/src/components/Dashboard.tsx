@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Loading from './Loading'
-import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, Bar, CartesianGrid, ComposedChart, Line, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useForecastData } from '../hooks/useForecastData'
 import { useWeatherData } from '../hooks/useWeatherData'
 import { useStationHistory } from '../hooks/useStationHistory'
@@ -10,6 +10,7 @@ const QUERY_REFETCH_INTERVAL_MS = 10.5 * 60 * 1000
 
 const TEMP_COLOR = '#ff3b30'
 const HUMIDITY_COLOR = '#00b8ff'
+const FORECAST_RAIN_COLOR = 'hsla(197, 100%, 60%, 0.98)'
 
 const YR_SYMBOL_ID_BY_CODE: Record<string, string> = {
   clearsky_day: '01d',
@@ -173,6 +174,14 @@ function Dashboard(props: DashboardProps) {
 
     return mapPreviousDayTemperatureSeries(outdoorHistory)
   }, [outdoorHistory])
+  const outdoorRainAxisMax = useMemo(() => {
+    const maxRainValue = outdoorChartData.reduce((maxValue, point) => {
+      const rainValue = typeof point.rain === 'number' ? point.rain : 0
+      return Math.max(maxValue, rainValue)
+    }, 0)
+
+    return Math.max(3, Math.ceil(maxRainValue * 2) / 2)
+  }, [outdoorChartData])
 
   const dayWindow = useMemo(() => getDayWindow(now), [now])
   const evenHourTicks = useMemo(() => buildEvenHourTicks(dayWindow.start, dayWindow.end), [dayWindow])
@@ -347,13 +356,18 @@ function Dashboard(props: DashboardProps) {
                           tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }}
                         />
                         <YAxis yAxisId="temp" stroke="rgba(161,161,170,0.22)" tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }} width={32} />
-                        <YAxis yAxisId="humidity" orientation="right" stroke="rgba(161,161,170,0.22)" tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }} width={32} />
-                        <Tooltip
-                          labelFormatter={formatTooltipTimestamp}
-                          contentStyle={{ backgroundColor: '#18181b', border: '1px solid #52525b', borderRadius: 8 }}
-                          labelStyle={{ color: '#d4d4d8' }}
-                          itemStyle={{ color: '#fafafa' }}
+                        <YAxis yAxisId="humidity" hide domain={[0, 100]} />
+                        <YAxis
+                          yAxisId="rain"
+                          orientation="right"
+                          domain={[0, outdoorRainAxisMax]}
+                          stroke="rgba(161,161,170,0.22)"
+                          tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }}
+                          tickFormatter={(value: number) => `${value.toFixed(1)}`}
+                          width={42}
+                          label={{ value: 'Rain mm', angle: -90, position: 'insideRight', fill: 'rgba(161,161,170,0.68)', fontSize: 10 }}
                         />
+                        <Tooltip content={<OutdoorChartTooltip />} />
                         <Line yAxisId="humidity" type="monotone" dataKey="humidity" stroke={HUMIDITY_COLOR} strokeWidth={1.8} dot={false} strokeOpacity={0.45} />
                         <Area yAxisId="temp" type="monotone" dataKey="temperature" fill="url(#outdoorTempFill)" fillOpacity={1} stroke={TEMP_COLOR} strokeWidth={2.2} dot={false} />
                         <Line
@@ -366,6 +380,13 @@ function Dashboard(props: DashboardProps) {
                           strokeWidth={1.7}
                           strokeOpacity={0.5}
                           dot={false}
+                        />
+                        <Bar
+                          yAxisId="rain"
+                          dataKey="rain"
+                          name="Rain mm"
+                          fill={FORECAST_RAIN_COLOR}
+                          shape={<RainBarShape />}
                         />
                       </ComposedChart>
                     </ResponsiveContainer>
@@ -702,18 +723,103 @@ function mergeOutdoorSeries(module: ModuleHistory) {
   const earlierTemperatureByTimestamp = new Map(
     module.earlierTemperatures.map((point) => [point.timestamp, point.value] as const)
   )
+  const halfHourMs = 30 * 60 * 1000
+  const rainByHalfHour = new Map<number, number>()
+  const seenRainHalfHours = new Set<number>()
 
-  return module.recentTemperatures.map((point, index) => ({
-    timestamp: point.timestamp,
-    temperature: point.value,
-    previousDayTemperature:
-      earlierTemperatureByTimestamp.has(point.timestamp)
-        ? earlierTemperatureByTimestamp.get(point.timestamp) ?? null
-        : module.earlierTemperatures[index]
-        ? module.earlierTemperatures[index].value
-        : null,
-    humidity: module.humidity[index] ? module.humidity[index].value : null,
-  }))
+  module.rain.forEach((point) => {
+    if (typeof point.value !== 'number') {
+      return
+    }
+
+    const halfHourTimestamp = Math.floor(point.timestamp / halfHourMs) * halfHourMs
+    rainByHalfHour.set(halfHourTimestamp, (rainByHalfHour.get(halfHourTimestamp) || 0) + Math.max(0, point.value))
+  })
+
+  return module.recentTemperatures.map((point, index) => {
+    const halfHourTimestamp = Math.floor(point.timestamp / halfHourMs) * halfHourMs
+    const isFirstPointInHalfHour = !seenRainHalfHours.has(halfHourTimestamp)
+    const rainValue = rainByHalfHour.get(halfHourTimestamp) ?? 0
+
+    if (isFirstPointInHalfHour) {
+      seenRainHalfHours.add(halfHourTimestamp)
+    }
+
+    return {
+      timestamp: point.timestamp,
+      temperature: point.value,
+      previousDayTemperature:
+        earlierTemperatureByTimestamp.has(point.timestamp)
+          ? earlierTemperatureByTimestamp.get(point.timestamp) ?? null
+          : module.earlierTemperatures[index]
+          ? module.earlierTemperatures[index].value
+          : null,
+      humidity: module.humidity[index] ? module.humidity[index].value : null,
+      rain: isFirstPointInHalfHour ? rainValue : 0,
+    }
+  })
+}
+
+function OutdoorChartTooltip(props: {
+  active?: boolean
+  label?: number | string
+  payload?: Array<{
+    payload?: {
+      temperature?: number | null
+      humidity?: number | null
+      rain?: number | null
+      previousDayTemperature?: number | null
+    }
+  }>
+}) {
+  if (!props.active || !props.payload || props.payload.length === 0) {
+    return null
+  }
+
+  const point = props.payload[0] && props.payload[0].payload ? props.payload[0].payload : {}
+  const formattedLabel = props.label !== undefined ? formatTooltipTimestamp(props.label) : '--:--'
+
+  return (
+    <div className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-2 text-xs text-zinc-100 shadow-lg">
+      <p className="mb-1 text-zinc-300">{formattedLabel}</p>
+      <p>Temperature: {typeof point.temperature === 'number' ? `${point.temperature.toFixed(1)} C` : '--'}</p>
+      <p>Humidity: {typeof point.humidity === 'number' ? `${point.humidity.toFixed(0)} %` : '--'}</p>
+      <p>Rain: {typeof point.rain === 'number' ? `${point.rain.toFixed(2)} mm` : '--'}</p>
+      <p>Temp yesterday: {typeof point.previousDayTemperature === 'number' ? `${point.previousDayTemperature.toFixed(1)} C` : '--'}</p>
+    </div>
+  )
+}
+
+function RainBarShape(props: {
+  x?: number
+  y?: number
+  width?: number
+  height?: number
+  fill?: string
+}) {
+  const x = typeof props.x === 'number' ? props.x : 0
+  const y = typeof props.y === 'number' ? props.y : 0
+  const width = typeof props.width === 'number' ? props.width : 0
+  const height = typeof props.height === 'number' ? props.height : 0
+
+  if (height <= 0) {
+    return null
+  }
+
+  const visualWidth = 5
+  const adjustedX = x + (width - visualWidth) / 2
+
+  return (
+    <rect
+      x={adjustedX}
+      y={y}
+      width={visualWidth}
+      height={height}
+      rx={1}
+      ry={1}
+      fill={props.fill || FORECAST_RAIN_COLOR}
+    />
+  )
 }
 
 function mergeIndoorSeries(module: ModuleHistory) {
