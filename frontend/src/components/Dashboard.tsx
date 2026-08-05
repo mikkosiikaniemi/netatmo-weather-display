@@ -402,6 +402,7 @@ function Dashboard(props: DashboardProps) {
                           type="number"
                           dataKey="timestamp"
                           domain={[dayWindow.start, dayWindow.end]}
+                          allowDataOverflow
                           ticks={evenHourTicks}
                           tickFormatter={formatHourTick}
                           minTickGap={22}
@@ -514,6 +515,7 @@ function Dashboard(props: DashboardProps) {
                           type="number"
                           dataKey="timestamp"
                           domain={[dayWindow.start, dayWindow.end]}
+                          allowDataOverflow
                           ticks={evenHourTicks}
                           tickFormatter={formatHourTick}
                           minTickGap={14}
