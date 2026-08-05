@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
-import Dashboard from './components/Dashboard'
 import Loading from './components/Loading'
 import LoginScreen from './components/LoginScreen'
 import { useAuth } from './hooks/useAuth'
 import './App.css'
+
+const Dashboard = lazy(() => import('./components/Dashboard'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,7 +65,9 @@ function AppContent() {
   }
 
   return (
-    <Dashboard authStatus={authStatus} onLogout={logout} />
+    <Suspense fallback={<Loading />}>
+      <Dashboard authStatus={authStatus} onLogout={logout} />
+    </Suspense>
   )
 }
 
