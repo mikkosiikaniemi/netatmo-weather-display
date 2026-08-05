@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import Loading from './Loading'
-import { Area, Bar, CartesianGrid, ComposedChart, Line, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useForecastData } from '../hooks/useForecastData'
 import { useWeatherData } from '../hooks/useWeatherData'
 import { useStationHistory } from '../hooks/useStationHistory'
@@ -114,10 +113,108 @@ interface DashboardProps {
   onLogout: () => void
 }
 
-function Dashboard(props: DashboardProps) {
-  const [isLoading, setIsLoading] = useState(true)
+interface DashboardHeaderProps {
+  onRefresh: () => void
+  onLogout: () => void
+  stationLatitude: number | null
+  stationLongitude: number | null
+  overviewFetchedAt: string | null
+  historyFetchedAt: string | null
+}
+
+const DashboardHeader = React.memo(function DashboardHeader(props: DashboardHeaderProps) {
   const [now, setNow] = useState<Date>(new Date())
   const [isMetaOpen, setIsMetaOpen] = useState(false)
+
+  const sunTimes = useMemo(() => {
+    if (props.stationLatitude === null || props.stationLongitude === null) {
+      return null
+    }
+
+    return calculateSunTimes(now, props.stationLatitude, props.stationLongitude)
+  }, [now, props.stationLatitude, props.stationLongitude])
+
+  const nextOverviewFetchAt = useMemo(() => getNextFetchAt(props.overviewFetchedAt), [props.overviewFetchedAt])
+  const nextHistoryFetchAt = useMemo(() => getNextFetchAt(props.historyFetchedAt), [props.historyFetchedAt])
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <section className="rounded-2xl bg-zinc-950 p-5">
+      <div className="grid gap-4 md:grid-cols-[auto_auto_auto] md:items-start">
+        <p className="text-6xl font-normal tracking-tight text-zinc-50">{formatDate(now)}</p>
+        <div className="relative flex items-center gap-2 md:justify-center md:self-center">
+          <button
+            onClick={props.onRefresh}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
+            type="button"
+            aria-label="Refresh data"
+            title="Refresh data"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+              <path d="M21 3v6h-6" />
+            </svg>
+          </button>
+          <button
+            onClick={props.onLogout}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
+            type="button"
+            aria-label="Disconnect"
+            title="Disconnect"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 2v10" />
+              <path d="M18.36 5.64a9 9 0 1 1-12.72 0" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setIsMetaOpen((previousValue) => !previousValue)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
+            type="button"
+            aria-label="Show info"
+            aria-expanded={isMetaOpen}
+            title="Show info"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 10v6" />
+              <path d="M12 7.25h.01" />
+            </svg>
+          </button>
+          {isMetaOpen ? (
+            <div className="absolute right-0 top-full z-20 mt-2 w-[min(92vw,22rem)] rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm text-zinc-200 shadow-xl backdrop-blur">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Info</p>
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                <span className="text-zinc-400">Sunrise</span>
+                <span className="justify-self-end tabular-nums">{sunTimes ? formatClock(sunTimes.sunrise) : '--:--:--'}</span>
+                <span className="text-zinc-400">Sunset</span>
+                <span className="justify-self-end tabular-nums">{sunTimes ? formatClock(sunTimes.sunset) : '--:--:--'}</span>
+                <span className="text-zinc-400">Overview fetched</span>
+                <span className="justify-self-end tabular-nums">{props.overviewFetchedAt ? formatFetchedAt(props.overviewFetchedAt) : '--:--:--'}</span>
+                <span className="text-zinc-400">Overview next</span>
+                <span className="justify-self-end tabular-nums">{nextOverviewFetchAt ? formatDateTime(nextOverviewFetchAt) : '--:--:--'}</span>
+                <span className="text-zinc-400">History fetched</span>
+                <span className="justify-self-end tabular-nums">{props.historyFetchedAt ? formatFetchedAt(props.historyFetchedAt) : '--:--:--'}</span>
+                <span className="text-zinc-400">History next</span>
+                <span className="justify-self-end tabular-nums">{nextHistoryFetchAt ? formatDateTime(nextHistoryFetchAt) : '--:--:--'}</span>
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <p className="text-6xl font-bold tabular-nums text-zinc-100 md:justify-self-end md:text-right">{formatClock(now)}</p>
+      </div>
+    </section>
+  )
+})
+
+function Dashboard(props: DashboardProps) {
   const weatherQuery = useWeatherData()
   const forecastQuery = useForecastData()
   const stations = weatherQuery.data ? weatherQuery.data.stations : []
@@ -151,14 +248,24 @@ function Dashboard(props: DashboardProps) {
 
     return map
   }, [historyQuery.data])
+  const indoorSeriesById = useMemo(() => {
+    const map: Record<string, ReturnType<typeof mergeIndoorSeries>> = {}
 
-  const sunTimes = useMemo(() => {
-    const station = selectedStation
-    if (!station || station.latitude === null || station.longitude === null) {
-      return null
-    }
-    return calculateSunTimes(now, station.latitude, station.longitude)
-  }, [now, selectedStation])
+    Object.values(indoorHistoryById).forEach((moduleHistory) => {
+      map[moduleHistory.moduleId] = mergeIndoorSeries(moduleHistory)
+    })
+
+    return map
+  }, [indoorHistoryById])
+  const indoorPreviousDaySeriesById = useMemo(() => {
+    const map: Record<string, ReturnType<typeof mapPreviousDayTemperatureSeries>> = {}
+
+    Object.values(indoorHistoryById).forEach((moduleHistory) => {
+      map[moduleHistory.moduleId] = mapPreviousDayTemperatureSeries(moduleHistory)
+    })
+
+    return map
+  }, [indoorHistoryById])
 
   const outdoorChartData = useMemo(() => {
     if (!outdoorHistory) {
@@ -183,7 +290,7 @@ function Dashboard(props: DashboardProps) {
     return Math.max(3, Math.ceil(maxRainValue * 2) / 2)
   }, [outdoorChartData])
 
-  const dayWindow = useMemo(() => getDayWindow(now), [now])
+  const dayWindow = useMemo(() => getDayWindow(new Date()), [weatherQuery.data, historyQuery.data])
   const evenHourTicks = useMemo(() => buildEvenHourTicks(dayWindow.start, dayWindow.end), [dayWindow])
   const indoorTemperatureDomain = useMemo(
     () => getSharedIndoorTemperatureDomain(indoorModules, indoorHistoryById),
@@ -192,14 +299,6 @@ function Dashboard(props: DashboardProps) {
   const indoorHumidityDomain = useMemo(
     () => getSharedIndoorHumidityDomain(indoorModules, indoorHistoryById),
     [indoorHistoryById, indoorModules]
-  )
-  const nextOverviewFetchAt = useMemo(
-    () => getNextFetchAt(weatherQuery.data ? weatherQuery.data.fetchedAt : null),
-    [weatherQuery.data]
-  )
-  const nextHistoryFetchAt = useMemo(
-    () => getNextFetchAt(historyQuery.data ? historyQuery.data.fetchedAt : null),
-    [historyQuery.data]
   )
   const forecastPoints = useMemo(
     () => (forecastQuery.data ? forecastQuery.data.hourly.slice(0,20) : []),
@@ -213,95 +312,17 @@ function Dashboard(props: DashboardProps) {
     () => ({ ['--forecast-points-count' as string]: String(Math.max(forecastPoints.length, 1)) }) as React.CSSProperties,
     [forecastPoints.length]
   )
-  const forecastMaxPrecipitation = useMemo(
-    () => forecastPoints.reduce((maxValue, point) => Math.max(maxValue, point.precipitationAmountMax, point.precipitationAmount), 0),
-    [forecastPoints]
-  )
-
-  useEffect(() => {
-    setIsLoading(false)
-  }, [])
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(new Date())
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [])
-
-  if (isLoading) {
-    return <Loading />
-  }
-
   return (
     <div className="min-h-screen bg-black text-zinc-100">
       <div className="mx-auto w-full max-w-7xl px-4 py-4">
-        <section className="rounded-2xl bg-zinc-950 p-5">
-          <div className="grid gap-4 md:grid-cols-[auto_auto_auto] md:items-start">
-            <p className="text-6xl font-normal tracking-tight text-zinc-50">{formatDate(now)}</p>
-            <div className="relative flex items-center gap-2 md:justify-center md:self-center">
-              <button
-                onClick={() => weatherQuery.refetch()}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
-                type="button"
-                aria-label="Refresh data"
-                title="Refresh data"
-              >
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-                  <path d="M21 3v6h-6" />
-                </svg>
-              </button>
-              <button
-                onClick={props.onLogout}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
-                type="button"
-                aria-label="Disconnect"
-                title="Disconnect"
-              >
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M12 2v10" />
-                  <path d="M18.36 5.64a9 9 0 1 1-12.72 0" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setIsMetaOpen((previousValue) => !previousValue)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
-                type="button"
-                aria-label="Show info"
-                aria-expanded={isMetaOpen}
-                title="Show info"
-              >
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 10v6" />
-                  <path d="M12 7.25h.01" />
-                </svg>
-              </button>
-              {isMetaOpen ? (
-                <div className="absolute right-0 top-full z-20 mt-2 w-[min(92vw,22rem)] rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm text-zinc-200 shadow-xl backdrop-blur">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Info</p>
-                  <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                    <span className="text-zinc-400">Sunrise</span>
-                    <span className="justify-self-end tabular-nums">{sunTimes ? formatClock(sunTimes.sunrise) : '--:--:--'}</span>
-                    <span className="text-zinc-400">Sunset</span>
-                    <span className="justify-self-end tabular-nums">{sunTimes ? formatClock(sunTimes.sunset) : '--:--:--'}</span>
-                    <span className="text-zinc-400">Overview fetched</span>
-                    <span className="justify-self-end tabular-nums">{weatherQuery.data ? formatFetchedAt(weatherQuery.data.fetchedAt) : '--:--:--'}</span>
-                    <span className="text-zinc-400">Overview next</span>
-                    <span className="justify-self-end tabular-nums">{nextOverviewFetchAt ? formatDateTime(nextOverviewFetchAt) : '--:--:--'}</span>
-                    <span className="text-zinc-400">History fetched</span>
-                    <span className="justify-self-end tabular-nums">{historyQuery.data ? formatFetchedAt(historyQuery.data.fetchedAt) : '--:--:--'}</span>
-                    <span className="text-zinc-400">History next</span>
-                    <span className="justify-self-end tabular-nums">{nextHistoryFetchAt ? formatDateTime(nextHistoryFetchAt) : '--:--:--'}</span>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-            <p className="text-6xl font-bold tabular-nums text-zinc-100 md:justify-self-end md:text-right">{formatClock(now)}</p>
-          </div>
-        </section>
+        <DashboardHeader
+          onRefresh={weatherQuery.refetch}
+          onLogout={props.onLogout}
+          stationLatitude={selectedStation ? selectedStation.latitude : null}
+          stationLongitude={selectedStation ? selectedStation.longitude : null}
+          overviewFetchedAt={weatherQuery.data ? weatherQuery.data.fetchedAt : null}
+          historyFetchedAt={historyQuery.data ? historyQuery.data.fetchedAt : null}
+        />
 
         <div className="mt-4">
           {outdoorModule ? (
@@ -368,7 +389,7 @@ function Dashboard(props: DashboardProps) {
               <div className="outdoor-chart-panel rounded-xl bg-zinc-950 p-4 pb-2">
                 {outdoorChartData.length > 0 ? (
                   <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" debounce={120}>
                       <ComposedChart data={outdoorChartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
                         <defs>
                           <linearGradient id="outdoorTempFill" x1="0" y1="0" x2="0" y2="1">
@@ -402,8 +423,8 @@ function Dashboard(props: DashboardProps) {
                           label={{ value: 'Rain mm', angle: -90, position: 'insideRight', fill: 'rgba(161,161,170,0.68)', fontSize: 10 }}
                         />
                         <Tooltip content={<OutdoorChartTooltip />} />
-                        <Line yAxisId="humidity" type="monotone" dataKey="humidity" stroke={HUMIDITY_COLOR} strokeWidth={1.8} dot={false} strokeOpacity={0.45} />
-                        <Area yAxisId="temp" type="monotone" dataKey="temperature" fill="url(#outdoorTempFill)" fillOpacity={1} stroke={TEMP_COLOR} strokeWidth={2.2} dot={false} />
+                        <Line yAxisId="humidity" type="monotone" dataKey="humidity" stroke={HUMIDITY_COLOR} strokeWidth={1.8} dot={false} strokeOpacity={0.45} isAnimationActive={false} />
+                        <Area yAxisId="temp" type="monotone" dataKey="temperature" fill="url(#outdoorTempFill)" fillOpacity={1} stroke={TEMP_COLOR} strokeWidth={2.2} dot={false} isAnimationActive={false} />
                         <Line
                           yAxisId="temp"
                           type="monotone"
@@ -414,6 +435,7 @@ function Dashboard(props: DashboardProps) {
                           strokeWidth={1.7}
                           strokeOpacity={0.5}
                           dot={false}
+                          isAnimationActive={false}
                         />
                         <Bar
                           yAxisId="rain"
@@ -421,6 +443,7 @@ function Dashboard(props: DashboardProps) {
                           name="Rain mm"
                           fill={FORECAST_RAIN_COLOR}
                           shape={<RainBarShape />}
+                          isAnimationActive={false}
                         />
                       </ComposedChart>
                     </ResponsiveContainer>
@@ -446,8 +469,9 @@ function Dashboard(props: DashboardProps) {
         <div className="indoor-modules-grid mt-4 grid grid-cols-1 gap-4" style={indoorGridStyle}>
             {indoorModules.map((module) => {
               const moduleHistory = indoorHistoryById[module.id] || null
+              const moduleSeries = indoorSeriesById[module.id] || []
               const moduleHistoryFetchFailed = failedHistoryModuleIds.has(module.id) || Boolean(moduleHistory && moduleHistory.historyFetchFailed)
-              const modulePreviousDayChartData = moduleHistory ? mapPreviousDayTemperatureSeries(moduleHistory) : []
+              const modulePreviousDayChartData = indoorPreviousDaySeriesById[module.id] || []
 
               return (
               <article key={module.id} className="rounded-xl bg-zinc-950 p-5 pb-2">
@@ -475,10 +499,10 @@ function Dashboard(props: DashboardProps) {
                   <TemperatureReading value={module.temperature} />
                 </p>
 
-                {indoorHistoryById[module.id] ? (
+                {moduleHistory ? (
                   <div className="mt-4 h-36">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={mergeIndoorSeries(indoorHistoryById[module.id])} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+                    <ResponsiveContainer width="100%" height="100%" debounce={120}>
+                      <ComposedChart data={moduleSeries} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
                         <defs>
                           <linearGradient id={'indoorTempFill-' + module.id} x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor={TEMP_COLOR} stopOpacity={0.4} />
@@ -519,8 +543,8 @@ function Dashboard(props: DashboardProps) {
                           labelStyle={{ color: '#d4d4d8' }}
                           itemStyle={{ color: '#fafafa' }}
                         />
-                        <Line yAxisId="humidity" type="monotone" dataKey="humidity" stroke={HUMIDITY_COLOR} strokeWidth={1.7} dot={false} strokeOpacity={0.45} />
-                        <Area yAxisId="temp" type="monotone" dataKey="temperature" fill={'url(#indoorTempFill-' + module.id + ')'} fillOpacity={1} stroke={TEMP_COLOR} strokeWidth={2.1} dot={false} />
+                        <Line yAxisId="humidity" type="monotone" dataKey="humidity" stroke={HUMIDITY_COLOR} strokeWidth={1.7} dot={false} strokeOpacity={0.45} isAnimationActive={false} />
+                        <Area yAxisId="temp" type="monotone" dataKey="temperature" fill={'url(#indoorTempFill-' + module.id + ')'} fillOpacity={1} stroke={TEMP_COLOR} strokeWidth={2.1} dot={false} isAnimationActive={false} />
                         <Line
                           yAxisId="temp"
                           type="monotone"
@@ -531,6 +555,7 @@ function Dashboard(props: DashboardProps) {
                           strokeWidth={1.6}
                           strokeOpacity={0.5}
                           dot={false}
+                          isAnimationActive={false}
                         />
                       </ComposedChart>
                     </ResponsiveContainer>
