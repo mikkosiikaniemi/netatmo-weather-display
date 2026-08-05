@@ -27,10 +27,12 @@ echo "[deploy] Pulling latest changes"
 git pull --ff-only
 
 echo "[deploy] Installing dependencies"
-npm run install:all
+npm --prefix backend install
+npm --prefix frontend install
 
 echo "[deploy] Building project"
-npm run build
+npm --prefix frontend run build
+npm --prefix backend run build
 
 if [ -x "$APP_ROOT/stop" ] && [ -x "$APP_ROOT/start" ]; then
   echo "[deploy] Restarting app"

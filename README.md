@@ -17,8 +17,7 @@ A weather display web application for presenting temperature information gathere
 ## Installation
 
 1. Clone the repository.
-1. Run `npm install` in the project root.
-1. Copy `.env.example` to `.env` and fill in the required values.
+1. Copy `backend/.env.example` to `backend/.env` and fill in the required values.
 1. Install backend dependencies with `cd backend && npm install`.
 1. Install frontend dependencies with `cd frontend && npm install`.
 
@@ -37,14 +36,14 @@ A weather display web application for presenting temperature information gathere
 
 This project now supports a single command deployment flow that:
 
-1. Installs root, backend and frontend dependencies.
-1. Builds SVG assets, frontend and backend.
+1. Installs backend and frontend dependencies.
+1. Builds frontend and backend.
 1. Starts the backend server, which also serves the built frontend.
 
 Run this from the repository root:
 
 ```bash
-npm run deploy
+bash deploy.sh
 ```
 
 ### Required backend environment variables for production
@@ -88,8 +87,8 @@ bash deploy.sh
 The script will:
 
 1. Pull latest Git changes with fast-forward only.
-1. Install root, backend and frontend dependencies.
-1. Build SVG assets, frontend and backend.
+1. Install backend and frontend dependencies.
+1. Build frontend and backend.
 1. Restart via Opalstack `stop` and `start` scripts when available.
 
 If needed, override the detected app root:
