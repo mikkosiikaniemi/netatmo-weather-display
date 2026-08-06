@@ -660,7 +660,10 @@ function Dashboard(props: DashboardProps) {
                       alt={point.symbolCode.replace(/_/g, ' ')}
                       loading="lazy"
                     />
-                    <p className="mt-1 text-xl font-semibold text-zinc-100">{Math.ceil(point.airTemperature)}°</p>
+                    <p className="mt-1 text-lg font-normal text-zinc-100">
+                      <span>{Math.ceil(point.airTemperature)}</span>
+                      <span className="opacity-40">°</span>
+                    </p>
                     <div
                       className="forecast__rain-block mt-1"
                       title={`Rain ${precipitationAmount.toFixed(1)} mm, max ${precipitationAmountMax.toFixed(1)} mm, probability ${Math.round(rainProbabilityPercent)}%`}
