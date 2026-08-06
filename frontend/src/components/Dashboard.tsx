@@ -281,6 +281,31 @@ function Dashboard(props: DashboardProps) {
 
     return mapPreviousDayTemperatureSeries(outdoorHistory)
   }, [outdoorHistory])
+  const outdoorTemperatureDomain = useMemo(() => {
+    const values = outdoorChartData
+      .map((point) => point.temperature)
+      .concat(outdoorPreviousDayChartData.map((point) => point.temperature))
+      .concat([
+        outdoorModule ? outdoorModule.temperature : null,
+        outdoorModule ? outdoorModule.minTemperature : null,
+        outdoorModule ? outdoorModule.maxTemperature : null,
+      ])
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+
+    if (values.length === 0) {
+      return ['auto', 'auto'] as ['auto', 'auto']
+    }
+
+    const minValue = Math.min(...values)
+    const maxValue = Math.max(...values)
+    const spread = maxValue - minValue
+    const padding = spread > 0 ? Math.max(0.8, spread * 0.1) : 1
+
+    return [
+      Math.floor((minValue - padding) * 2) / 2,
+      Math.ceil((maxValue + padding) * 2) / 2,
+    ] as [number, number]
+  }, [outdoorChartData, outdoorModule, outdoorPreviousDayChartData])
   const outdoorRainAxisMax = useMemo(() => {
     const maxRainValue = outdoorChartData.reduce((maxValue, point) => {
       const rainValue = typeof point.rain === 'number' ? point.rain : 0
@@ -411,7 +436,13 @@ function Dashboard(props: DashboardProps) {
                           axisLine={false}
                           tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }}
                         />
-                        <YAxis yAxisId="temp" stroke="rgba(161,161,170,0.22)" tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }} width={32} />
+                        <YAxis
+                          yAxisId="temp"
+                          stroke="rgba(161,161,170,0.22)"
+                          domain={outdoorTemperatureDomain}
+                          tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }}
+                          width={32}
+                        />
                         <YAxis yAxisId="humidity" hide domain={[0, 100]} />
                         <YAxis
                           yAxisId="rain"
