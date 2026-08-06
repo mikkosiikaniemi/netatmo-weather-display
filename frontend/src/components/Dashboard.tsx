@@ -146,7 +146,7 @@ const DashboardHeader = React.memo(function DashboardHeader(props: DashboardHead
   }, [])
 
   return (
-    <section className="rounded-2xl bg-zinc-950 p-5">
+    <section className="rounded-lg bg-zinc-950 p-5">
       <div className="grid gap-4 md:grid-cols-[auto_auto_auto] md:items-start">
         <p className="text-6xl font-normal tracking-tight text-zinc-50">{formatDate(now)}</p>
         <div className="relative flex items-center gap-2 md:justify-center md:self-center">
@@ -189,7 +189,7 @@ const DashboardHeader = React.memo(function DashboardHeader(props: DashboardHead
             </svg>
           </button>
           {isMetaOpen ? (
-            <div className="absolute right-0 top-full z-20 mt-2 w-[min(92vw,22rem)] rounded-xl border border-zinc-700 bg-zinc-950 p-3 text-sm text-zinc-200 shadow-xl backdrop-blur">
+            <div className="absolute right-0 top-full z-20 mt-2 w-[min(92vw,22rem)] rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-sm text-zinc-200 shadow-xl backdrop-blur">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Info</p>
               <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
                 <span className="text-zinc-400">Sunrise</span>
@@ -344,13 +344,28 @@ function Dashboard(props: DashboardProps) {
     () => (forecastQuery.data ? forecastQuery.data.hourly.slice(0,20) : []),
     [forecastQuery.data]
   )
+  const forecastDayGroups = useMemo(() => {
+    const groups: Array<{ dayStartTimestamp: number; points: typeof forecastPoints }> = []
+
+    forecastPoints.forEach((point) => {
+      const dayStart = new Date(point.timestamp)
+      dayStart.setHours(0, 0, 0, 0)
+      const dayStartTimestamp = dayStart.getTime()
+      const previousGroup = groups.length > 0 ? groups[groups.length - 1] : null
+
+      if (!previousGroup || previousGroup.dayStartTimestamp !== dayStartTimestamp) {
+        groups.push({ dayStartTimestamp, points: [point] })
+        return
+      }
+
+      previousGroup.points.push(point)
+    })
+
+    return groups
+  }, [forecastPoints])
   const indoorGridStyle = useMemo(
     () => ({ ['--indoor-modules-count' as string]: String(Math.max(indoorModules.length, 1)) }) as React.CSSProperties,
     [indoorModules.length]
-  )
-  const forecastGridStyle = useMemo(
-    () => ({ ['--forecast-points-count' as string]: String(Math.max(forecastPoints.length, 1)) }) as React.CSSProperties,
-    [forecastPoints.length]
   )
   return (
     <div className="min-h-screen bg-black text-zinc-100">
@@ -367,7 +382,7 @@ function Dashboard(props: DashboardProps) {
         <div className="mt-4">
           {outdoorModule ? (
             <div className="outdoor-overview-grid grid grid-cols-1 gap-4">
-              <div className="flex flex-col rounded-xl bg-zinc-950 p-5">
+              <div className="flex flex-col rounded-lg bg-zinc-950 p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2">
                     <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(outdoorModule.lastSeenAt)}>{outdoorModule.name}</p>
@@ -428,7 +443,7 @@ function Dashboard(props: DashboardProps) {
                 </div>
               </div>
 
-              <div className="outdoor-chart-panel rounded-xl bg-zinc-950 p-4 pb-2">
+              <div className="outdoor-chart-panel rounded-lg bg-zinc-950 p-4 pb-2">
                 {outdoorChartData.length > 0 ? (
                   <div className="h-60">
                     <ResponsiveContainer width="100%" height="100%" debounce={120}>
@@ -528,7 +543,7 @@ function Dashboard(props: DashboardProps) {
               const modulePreviousDayChartData = indoorPreviousDaySeriesById[module.id] || []
 
               return (
-              <article key={module.id} className="rounded-xl bg-zinc-950 p-5 pb-2">
+              <article key={module.id} className="rounded-lg bg-zinc-950 p-5 pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-start gap-2">
                     <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(module.lastSeenAt)}>{module.name}</p>
@@ -640,8 +655,15 @@ function Dashboard(props: DashboardProps) {
           {forecastQuery.isLoading ? <p className="mt-3 text-zinc-400">Loading forecast...</p> : null}
           {forecastQuery.isError ? <p className="mt-3 text-rose-300">Forecast unavailable right now.</p> : null}
           {forecastQuery.data ? (
-            <div className="forecast-grid rounded-lg bg-zinc-950 p-3 mt-4 grid grid-cols-2" style={forecastGridStyle}>
-              {forecastPoints.map((point) => {
+            <div className="mt-4 flex gap-4">
+              {forecastDayGroups.map((dayGroup) => (
+                <div
+                  key={dayGroup.dayStartTimestamp}
+                  className="forecast-grid rounded-lg overflow-hidden bg-zinc-950 px-3 grid grid-cols-2"
+                  style={{ ['--forecast-points-count' as string]: String(Math.max(dayGroup.points.length, 1)) } as React.CSSProperties}
+                >
+                  {dayGroup.points.map((point, index) => {
+                    const showWeekdayLabel = index === 0
                 const symbolId = resolveYrSymbolId(point.symbolCode)
                 const precipitationAmount = Math.max(0, point.precipitationAmount)
                 const precipitationAmountMax = Math.max(precipitationAmount, point.precipitationAmountMax || 0)
@@ -653,45 +675,50 @@ function Dashboard(props: DashboardProps) {
                 const rainProbabilityPercent = Math.max(0, Math.min(100, point.precipitationProbability || 0))
                 const rainOpacity = Math.min(1, 0.2 + 0.8 * Math.pow(rainProbabilityPercent / 100, 0.65))
 
-                return (
-                  <div key={point.timestamp} className="text-center p-1">
-										<p className="text-s text-zinc-300">{formatHour(point.timestamp)}</p>
-                    <img
-                      src={`/yr/${symbolId}.svg`}
-                      className="mx-auto mt-2 h-11 w-11"
-                      alt={point.symbolCode.replace(/_/g, ' ')}
-                      loading="lazy"
-                    />
-                    <p className="mt-1 text-lg font-normal text-zinc-100">
-                      <span>{Math.ceil(point.airTemperature)}</span>
-                      <span className="opacity-40">°</span>
-                    </p>
-                    <div
-                      className="forecast__rain-block mt-1"
-                      title={`Rain ${precipitationAmount.toFixed(1)} mm, max ${precipitationAmountMax.toFixed(1)} mm, probability ${Math.round(rainProbabilityPercent)}%`}
-                      aria-label={`Rain ${precipitationAmount.toFixed(1)} millimeters, max ${precipitationAmountMax.toFixed(1)} millimeters, probability ${Math.round(rainProbabilityPercent)} percent`}
-                    >
-                      <span
-                        className="forecast__rain-bar"
-                        style={{
-                          ['--rain-height' as string]: `${rainBarHeightPx}px`,
-                          ['--rain-base-height' as string]: `${rainBaseHeightPercent}%`,
-                          ['--rain-opacity' as string]: String(rainOpacity),
-                        } as React.CSSProperties}
-                      ></span>
-                    </div>
-                    <p className="forecast__rain-value">{precipitationAmount > 0 ? precipitationAmount.toFixed(1) : ''}</p>
-                    <div className="mt-1 text-xs text-zinc-300">
-                      <span
-                        className="forecast__data-point--wind"
-                        style={{ ['--wind-direction' as string]: `${point.windFromDirection}deg` }}
-                      >
-                        <span className="forecast__data-point--wind-value">{Math.ceil(point.windSpeed)}</span>
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
+                    return (
+                      <div key={point.timestamp} className="text-center px-0.5 pt-2 pb-3">
+                        <p className={`mb-1 h-4 text-[0.65rem] font-semibold tracking-wide text-zinc-400 ${showWeekdayLabel ? 'opacity-100' : 'opacity-0'}`}>
+                          {showWeekdayLabel ? formatWeekdayShort(point.timestamp) : ' '}
+                        </p>
+											<p className="text-s text-zinc-300">{formatHour(point.timestamp)}</p>
+                        <img
+                          src={`/yr/${symbolId}.svg`}
+                          className="mx-auto mt-2 h-11 w-11"
+                          alt={point.symbolCode.replace(/_/g, ' ')}
+                          loading="lazy"
+                        />
+                        <p className="mt-1 text-lg font-normal text-zinc-100">
+                          <span>{Math.ceil(point.airTemperature)}</span>
+                          <span className="opacity-40">°</span>
+                        </p>
+                        <div
+                          className="forecast__rain-block mt-1"
+                          title={`Rain ${precipitationAmount.toFixed(1)} mm, max ${precipitationAmountMax.toFixed(1)} mm, probability ${Math.round(rainProbabilityPercent)}%`}
+                          aria-label={`Rain ${precipitationAmount.toFixed(1)} millimeters, max ${precipitationAmountMax.toFixed(1)} millimeters, probability ${Math.round(rainProbabilityPercent)} percent`}
+                        >
+                          <span
+                            className="forecast__rain-bar"
+                            style={{
+                              ['--rain-height' as string]: `${rainBarHeightPx}px`,
+                              ['--rain-base-height' as string]: `${rainBaseHeightPercent}%`,
+                              ['--rain-opacity' as string]: String(rainOpacity),
+                            } as React.CSSProperties}
+                          ></span>
+                        </div>
+                        <p className="forecast__rain-value">{precipitationAmount > 0 ? precipitationAmount.toFixed(1) : ''}</p>
+                        <div className="mt-1 text-xs text-zinc-300">
+                          <span
+                            className="forecast__data-point--wind"
+                            style={{ ['--wind-direction' as string]: `${point.windFromDirection}deg` }}
+                          >
+                            <span className="forecast__data-point--wind-value">{Math.ceil(point.windSpeed)}</span>
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
             </div>
           ) : null}
         </div>
@@ -754,6 +781,25 @@ function formatHourTick(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString('fi-FI', {
     hour: '2-digit',
   })
+}
+
+function formatWeekdayShort(timestamp: number) {
+  const shortWeekday = new Date(timestamp).toLocaleDateString('fi-FI', {
+    weekday: 'short',
+  })
+
+  return shortWeekday.replace('.', '').toUpperCase()
+}
+
+function isSameCalendarDay(timestampA: number, timestampB: number) {
+  const firstDate = new Date(timestampA)
+  const secondDate = new Date(timestampB)
+
+  return (
+    firstDate.getFullYear() === secondDate.getFullYear()
+    && firstDate.getMonth() === secondDate.getMonth()
+    && firstDate.getDate() === secondDate.getDate()
+  )
 }
 
 function formatTooltipTimestamp(value: number | string) {
