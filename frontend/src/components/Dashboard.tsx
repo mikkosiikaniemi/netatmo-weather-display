@@ -689,7 +689,7 @@ function TemperatureReading(props: { value: number | null }) {
   return (
     <span className="inline-flex items-baseline gap-1 font-mono">
       {mainDigits}
-      <span className="align-bottom text-[0.5em] opacity-60">{fractionalDigit}°</span>
+      <span className="align-bottom text-[0.5em] tracking-[-.1em] opacity-40">{fractionalDigit}°</span>
     </span>
   )
 }
