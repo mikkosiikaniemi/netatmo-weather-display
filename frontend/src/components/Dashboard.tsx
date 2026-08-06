@@ -282,9 +282,12 @@ function Dashboard(props: DashboardProps) {
     return mapPreviousDayTemperatureSeries(outdoorHistory)
   }, [outdoorHistory])
   const outdoorTemperatureDomain = useMemo(() => {
-    const values = outdoorChartData
+    const chartTemperatureValues = outdoorChartData
       .map((point) => point.temperature)
       .concat(outdoorPreviousDayChartData.map((point) => point.temperature))
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+
+    const values = chartTemperatureValues
       .concat([
         outdoorModule ? outdoorModule.temperature : null,
         outdoorModule ? outdoorModule.minTemperature : null,
@@ -300,9 +303,13 @@ function Dashboard(props: DashboardProps) {
     const maxValue = Math.max(...values)
     const spread = maxValue - minValue
     const padding = spread > 0 ? Math.max(0.8, spread * 0.1) : 1
+    const hasSubZeroTemperature = chartTemperatureValues.some((value) => value < 0)
+    const domainMin = hasSubZeroTemperature
+      ? Math.floor((minValue - padding) * 2) / 2
+      : 0
 
     return [
-      Math.floor((minValue - padding) * 2) / 2,
+      domainMin,
       Math.ceil((maxValue + padding) * 2) / 2,
     ] as [number, number]
   }, [outdoorChartData, outdoorModule, outdoorPreviousDayChartData])
