@@ -321,12 +321,20 @@ function Dashboard(props: DashboardProps) {
 
     return Math.max(3, Math.ceil(maxRainValue * 2) / 2)
   }, [outdoorChartData])
+  const outdoorTemperatureTicks = useMemo(
+    () => buildTemperatureTicks(outdoorTemperatureDomain, 5),
+    [outdoorTemperatureDomain]
+  )
 
   const dayWindow = useMemo(() => getDayWindow(new Date()), [weatherQuery.data, historyQuery.data])
   const evenHourTicks = useMemo(() => buildEvenHourTicks(dayWindow.start, dayWindow.end), [dayWindow])
   const indoorTemperatureDomain = useMemo(
     () => getSharedIndoorTemperatureDomain(indoorModules, indoorHistoryById),
     [indoorHistoryById, indoorModules]
+  )
+  const indoorTemperatureTicks = useMemo(
+    () => buildTemperatureTicks(indoorTemperatureDomain, 2),
+    [indoorTemperatureDomain]
   )
   const indoorHumidityDomain = useMemo(
     () => getSharedIndoorHumidityDomain(indoorModules, indoorHistoryById),
@@ -447,6 +455,11 @@ function Dashboard(props: DashboardProps) {
                           yAxisId="temp"
                           stroke="rgba(161,161,170,0.22)"
                           domain={outdoorTemperatureDomain}
+                          ticks={outdoorTemperatureTicks}
+                          interval={0}
+                          tickFormatter={(value: number | string) =>
+                            formatTemperatureTickLabel(value, outdoorTemperatureDomain)
+                          }
                           tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }}
                           width={32}
                         />
@@ -566,6 +579,11 @@ function Dashboard(props: DashboardProps) {
                           yAxisId="temp"
                           stroke="rgba(161,161,170,0.18)"
                           domain={indoorTemperatureDomain}
+                          ticks={indoorTemperatureTicks}
+                          interval={0}
+                          tickFormatter={(value: number | string) =>
+                            formatTemperatureTickLabel(value, indoorTemperatureDomain)
+                          }
                           tick={{ fontSize: 9, fill: 'rgba(161,161,170,0.64)' }}
                           width={28}
                         />
@@ -1026,6 +1044,59 @@ function getRainBarHeightPx(precipitationMaxMm: number) {
   const normalized = (precipitationMaxMm - 1) / 19
 
   return 1 + normalized * 29
+}
+
+function buildTemperatureTicks(
+  domain: [number, number] | ['auto', 'auto'],
+  step: number
+): number[] | undefined {
+  if (domain[0] === 'auto') {
+    return undefined
+  }
+
+  const [minValue, maxValue] = domain
+
+  if (!Number.isFinite(minValue) || !Number.isFinite(maxValue) || minValue >= maxValue || step <= 0) {
+    return undefined
+  }
+
+  const firstTick = Math.ceil(minValue / step) * step
+  const ticks: number[] = []
+
+  for (let value = firstTick; value <= maxValue; value += step) {
+    ticks.push(Number(value.toFixed(4)))
+  }
+
+  if (ticks.length === 0 || ticks[0] !== minValue) {
+    ticks.unshift(minValue)
+  }
+
+  if (ticks[ticks.length - 1] !== maxValue) {
+    ticks.push(maxValue)
+  }
+
+  return ticks
+}
+
+function formatTemperatureTickLabel(
+  value: number | string,
+  domain: [number, number] | ['auto', 'auto']
+) {
+  const numericValue = typeof value === 'number' ? value : Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return String(value)
+  }
+
+  if (domain[0] !== 'auto') {
+    const [, maxValue] = domain
+
+    if (Math.abs(numericValue - maxValue) < 0.0001) {
+      return ''
+    }
+  }
+
+  return Number.isInteger(numericValue) ? String(numericValue) : numericValue.toFixed(1)
 }
 
 function calculateSunTimes(date: Date, latitude: number, longitude: number) {
