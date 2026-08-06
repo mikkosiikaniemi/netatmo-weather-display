@@ -41,7 +41,7 @@
 	align-items: flex-end;
 	justify-content: center;
 	position: relative;
-	padding-bottom: 0.1rem;
+	padding-bottom: 0;
 }
 
 .forecast__rain-block::before {
@@ -51,17 +51,15 @@
 	right: 10%;
 	bottom: 0;
 	height: 1px;
-	background: hsla(196, 100%, 66%, 0.42);
 }
 
 .forecast__rain-bar {
 	position: relative;
 	width: 84%;
-	height: var(--rain-height, 0%);
+	height: calc(var(--rain-height, 0px) + 1px);
 	min-height: 0;
 	border-radius: 0.18rem 0.18rem 0 0;
 	background: hsla(199, 100%, 62%, 0.2);
-	box-shadow: 0 0 0 1px hsla(197, 100%, 64%, 0.24) inset;
 	transition: height 220ms ease-out;
 	overflow: hidden;
 	opacity: var(--rain-opacity, 1);
@@ -73,8 +71,8 @@
 	left: 0;
 	right: 0;
 	bottom: 0;
-	height: var(--rain-base-height, 0%);
-	background: linear-gradient(180deg, hsla(196, 100%, 74%, 0.99), hsla(199, 100%, 50%, 0.96));
+	height: calc(var(--rain-base-height, 0%) + 1px);
+	background: hsla(196, 100%, 66%);
 }
 
 .forecast__rain-bar::after {
@@ -83,8 +81,8 @@
 	top: 0;
 	left: 0;
 	right: 0;
-	bottom: var(--rain-base-height, 0%);
-	background: repeating-linear-gradient(-45deg, hsla(199, 98%, 90%, 0.75) 0 3px, hsla(199, 98%, 90%, 0) 3px 6px);
+	bottom: calc(var(--rain-base-height, 0%) + 1px);
+	background: repeating-linear-gradient(-45deg, hsla(196, 100%, 66%) 0 3px, transparent 3px 6px);
 	opacity: 0.95;
 }
 
