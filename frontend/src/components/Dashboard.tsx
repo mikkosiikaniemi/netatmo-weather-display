@@ -376,7 +376,7 @@ function Dashboard(props: DashboardProps) {
                     ) : null}
                   </div>
                   <div className="flex items-center gap-1 text-sm text-zinc-300" title={outdoorModule.humidity !== null ? 'Humidity: ' + outdoorModule.humidity + '%' : 'Humidity unavailable'}>
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
                     </svg>
                     <span>{outdoorModule.humidity !== null ? outdoorModule.humidity + '%' : '--'}</span>
@@ -396,7 +396,7 @@ function Dashboard(props: DashboardProps) {
                       (outdoorModule.minTemperature !== null ? outdoorModule.minTemperature.toFixed(1) + '°' : '--')
                     }
                   >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M7 10 12 15 17 10" />
                     </svg>
                     <span>{outdoorModule.minTemperature !== null ? outdoorModule.minTemperature.toFixed(1) + '°' : '--'}</span>
@@ -408,7 +408,7 @@ function Dashboard(props: DashboardProps) {
                       (outdoorModule.maxTemperature !== null ? outdoorModule.maxTemperature.toFixed(1) + '°' : '--')
                     }
                   >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M7 14 12 9l5 5" />
                     </svg>
                     <span>{outdoorModule.maxTemperature !== null ? outdoorModule.maxTemperature.toFixed(1) + '°' : '--'}</span>
@@ -420,7 +420,7 @@ function Dashboard(props: DashboardProps) {
                       (outdoorModule.rainLast24Hours !== null ? outdoorModule.rainLast24Hours + ' mm' : '--')
                     }
                   >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
                     </svg>
                     <span>{outdoorModule.rainLast24Hours !== null ? outdoorModule.rainLast24Hours + ' mm' : '--'}</span>
@@ -538,7 +538,7 @@ function Dashboard(props: DashboardProps) {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-zinc-300">
                     <span className="inline-flex items-center gap-1" title={module.humidity !== null ? 'Humidity: ' + module.humidity + '%' : 'Humidity unavailable'}>
-                      <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
                       </svg>
                       <span>{module.humidity !== null ? module.humidity + '%' : '--'}</span>
