@@ -367,7 +367,7 @@ function Dashboard(props: DashboardProps) {
         <div className="mt-4">
           {outdoorModule ? (
             <div className="outdoor-overview-grid grid grid-cols-1 gap-4">
-              <div className="rounded-xl bg-zinc-950 p-5">
+              <div className="flex flex-col rounded-xl bg-zinc-950 p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2">
                     <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(outdoorModule.lastSeenAt)}>{outdoorModule.name}</p>
@@ -382,11 +382,13 @@ function Dashboard(props: DashboardProps) {
                     <span>{outdoorModule.humidity !== null ? outdoorModule.humidity + '%' : '--'}</span>
                   </div>
                 </div>
-                <p className="mt-2 text-[8rem] font-bold leading-none text-zinc-100 text-center">
-                  <TemperatureReading value={outdoorModule.temperature} />
-                </p>
+                <div className="flex flex-1 items-center justify-center">
+                  <p className="text-center text-[8rem] font-bold leading-none text-zinc-100">
+                    <TemperatureReading value={outdoorModule.temperature} />
+                  </p>
+                </div>
 
-                <div className="mt-2 flex items-center justify-center gap-4 text-sm text-zinc-300">
+                <div className="mt-auto flex items-center justify-center gap-4 text-sm text-zinc-300">
                   <span
                     className="inline-flex items-center gap-1"
                     title={
@@ -428,7 +430,7 @@ function Dashboard(props: DashboardProps) {
 
               <div className="outdoor-chart-panel rounded-xl bg-zinc-950 p-4 pb-2">
                 {outdoorChartData.length > 0 ? (
-                  <div className="h-64">
+                  <div className="h-60">
                     <ResponsiveContainer width="100%" height="100%" debounce={120}>
                       <ComposedChart data={outdoorChartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
                         <defs>
