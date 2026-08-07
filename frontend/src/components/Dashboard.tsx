@@ -407,7 +407,7 @@ function Dashboard(props: DashboardProps) {
                   </div>
                 </div>
                 <div className="flex flex-1 items-center justify-center">
-                  <p className="text-center text-[8rem] font-bold leading-none text-zinc-100">
+                  <p className="text-center text-[clamp(6.25rem,18vw,9.5rem)] font-bold leading-none text-zinc-100">
                     <TemperatureReading value={outdoorModule.temperature} />
                   </p>
                 </div>
