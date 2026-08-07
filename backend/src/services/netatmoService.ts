@@ -247,14 +247,16 @@ export class NetatmoService {
       : [];
 
     const now = Date.now();
+    const forecastHorizonMs = 9 * 24 * 60 * 60 * 1000;
     const hourly = timeseries
       .map((entry: any) => {
         const ts = new Date(entry.time).getTime();
         const instant = entry.data && entry.data.instant && entry.data.instant.details ? entry.data.instant.details : {};
         const oneHour = entry.data && entry.data.next_1_hours ? entry.data.next_1_hours : null;
         const sixHours = entry.data && entry.data.next_6_hours ? entry.data.next_6_hours : null;
-        const summary = oneHour && oneHour.summary ? oneHour.summary : (sixHours && sixHours.summary ? sixHours.summary : null);
-        const details = oneHour && oneHour.details ? oneHour.details : (sixHours && sixHours.details ? sixHours.details : {});
+        const scopeData = oneHour || sixHours;
+        const summary = scopeData && scopeData.summary ? scopeData.summary : null;
+        const details = scopeData && scopeData.details ? scopeData.details : {};
 
         return {
           timestamp: ts,
@@ -272,7 +274,7 @@ export class NetatmoService {
         };
       })
       .filter((entry: any) => entry.timestamp >= now)
-      .slice(0, 24);
+      .filter((entry: any) => entry.timestamp <= now + forecastHorizonMs);
 
     const payload: ForecastResponse = {
       fetchedAt: new Date().toISOString(),

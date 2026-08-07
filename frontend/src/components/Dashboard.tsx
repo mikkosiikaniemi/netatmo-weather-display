@@ -10,6 +10,9 @@ const QUERY_REFETCH_INTERVAL_MS = 10.5 * 60 * 1000
 const TEMP_COLOR = '#ff3b30'
 const HUMIDITY_COLOR = '#00b8ff'
 const FORECAST_RAIN_COLOR = 'hsla(197, 100%, 60%, 0.98)'
+const FORECAST_DAYS_TO_SHOW = 3
+const FORECAST_MAX_POINTS = 20
+const FORECAST_TIME_ZONE = 'Europe/Helsinki'
 
 const YR_SYMBOL_ID_BY_CODE: Record<string, string> = {
   clearsky_day: '01d',
@@ -340,12 +343,11 @@ function Dashboard(props: DashboardProps) {
     () => getSharedIndoorHumidityDomain(indoorModules, indoorHistoryById),
     [indoorHistoryById, indoorModules]
   )
-  const forecastPoints = useMemo(
-    () => (forecastQuery.data ? forecastQuery.data.hourly.slice(0,20) : []),
-    [forecastQuery.data]
-  )
   const forecastDayGroups = useMemo(() => {
-    const groups: Array<{ dayStartTimestamp: number; points: typeof forecastPoints }> = []
+    const groups: Array<{ dayStartTimestamp: number; points: NonNullable<typeof forecastQuery.data>['hourly'] }> = []
+    const forecastPoints = forecastQuery.data
+      ? applyLegacyForecastScopeRendering(forecastQuery.data.hourly, Date.now(), FORECAST_TIME_ZONE)
+      : []
 
     forecastPoints.forEach((point) => {
       const dayStart = new Date(point.timestamp)
@@ -361,8 +363,15 @@ function Dashboard(props: DashboardProps) {
       previousGroup.points.push(point)
     })
 
-    return groups
-  }, [forecastPoints])
+    const compactedGroups = groups
+      .slice(0, FORECAST_DAYS_TO_SHOW)
+      .map((group) => ({
+        dayStartTimestamp: group.dayStartTimestamp,
+        points: group.points,
+      }))
+
+    return capForecastGroupsToPointLimit(compactedGroups, FORECAST_MAX_POINTS)
+  }, [forecastQuery.data])
   const indoorGridStyle = useMemo(
     () => ({ ['--indoor-modules-count' as string]: String(Math.max(indoorModules.length, 1)) }) as React.CSSProperties,
     [indoorModules.length]
@@ -659,8 +668,12 @@ function Dashboard(props: DashboardProps) {
               {forecastDayGroups.map((dayGroup) => (
                 <div
                   key={dayGroup.dayStartTimestamp}
-                  className="forecast-grid min-w-0 flex-1 basis-0 rounded-lg overflow-hidden bg-zinc-950 px-3 grid grid-cols-2"
-                  style={{ ['--forecast-points-count' as string]: String(Math.max(dayGroup.points.length, 1)) } as React.CSSProperties}
+                  className="forecast-grid min-w-0 rounded-lg overflow-hidden bg-zinc-950 px-3 grid grid-cols-2"
+                  style={{
+                    ['--forecast-points-count' as string]: String(Math.max(dayGroup.points.length, 1)),
+                    flexGrow: Math.max(dayGroup.points.length, 1),
+                    flexBasis: 0,
+                  } as React.CSSProperties}
                 >
                   {dayGroup.points.map((point, index) => {
                     const showWeekdayLabel = index === 0
@@ -1095,6 +1108,133 @@ function getRainBarHeightPx(precipitationMaxMm: number) {
   const normalized = (precipitationMaxMm - 1) / 19
 
   return 1 + normalized * 29
+}
+
+function applyLegacyForecastScopeRendering<T extends { timestamp: number }>(
+  points: T[],
+  nowMs: number,
+  timeZone: string
+) {
+  return points.filter((point) => {
+    const scope = getLegacyForecastScope(nowMs, point.timestamp, timeZone)
+
+    if (scope !== 'next_6_hours') {
+      return true
+    }
+
+    return isLegacySixHourScopeTimestamp(point.timestamp, timeZone)
+  })
+}
+
+function getLegacyForecastScope(
+  nowMs: number,
+  datapointTimestampMs: number,
+  timeZone: string
+): 'next_1_hours' | 'next_6_hours' {
+  const todayStartMs = getStartOfDayMsInTimeZone(timeZone, 0, new Date(nowMs))
+  const tomorrowStartMs = getStartOfDayMsInTimeZone(timeZone, 1, new Date(nowMs))
+
+  const today09Ms = todayStartMs + 9 * 60 * 60 * 1000
+  const today16Ms = todayStartMs + 16 * 60 * 60 * 1000
+  const today19Ms = todayStartMs + 19 * 60 * 60 * 1000
+  const today21Ms = todayStartMs + 21 * 60 * 60 * 1000
+  const tomorrow01Ms = tomorrowStartMs + 1 * 60 * 60 * 1000
+  const tomorrow07Ms = tomorrowStartMs + 7 * 60 * 60 * 1000
+  const tomorrow08Ms = tomorrowStartMs + 8 * 60 * 60 * 1000
+  const tomorrow12Ms = tomorrowStartMs + 12 * 60 * 60 * 1000
+  const tomorrow13Ms = tomorrowStartMs + 13 * 60 * 60 * 1000
+
+  if (nowMs < today09Ms) {
+    return datapointTimestampMs > today19Ms ? 'next_6_hours' : 'next_1_hours'
+  }
+
+  if (nowMs < today16Ms) {
+    const isTonightToTomorrowMorning = datapointTimestampMs > today21Ms && datapointTimestampMs < tomorrow07Ms
+    const isTomorrowAfternoonOnward = datapointTimestampMs > tomorrow12Ms
+    return isTonightToTomorrowMorning || isTomorrowAfternoonOnward ? 'next_6_hours' : 'next_1_hours'
+  }
+
+  const isTomorrowNight = datapointTimestampMs > tomorrow01Ms && datapointTimestampMs < tomorrow08Ms
+  const isTomorrowAfternoonOnward = datapointTimestampMs > tomorrow13Ms
+  return isTomorrowNight || isTomorrowAfternoonOnward ? 'next_6_hours' : 'next_1_hours'
+}
+
+function isLegacySixHourScopeTimestamp(timestampMs: number, timeZone: string) {
+  const hour = getZonedDateParts(new Date(timestampMs), timeZone, true).hour
+  return hour === 0 || hour === 6 || hour === 12 || hour === 18
+}
+
+function getStartOfDayMsInTimeZone(timeZone: string, dayOffset: number, referenceDate: Date) {
+  const zonedNow = getZonedDateParts(referenceDate, timeZone)
+  const nominalUtcMidnightMs = Date.UTC(zonedNow.year, zonedNow.month - 1, zonedNow.day + dayOffset, 0, 0, 0)
+  const offsetMinutes = getTimeZoneOffsetMinutes(new Date(nominalUtcMidnightMs), timeZone)
+  return nominalUtcMidnightMs - offsetMinutes * 60 * 1000
+}
+
+function getTimeZoneOffsetMinutes(date: Date, timeZone: string) {
+  const zoned = getZonedDateParts(date, timeZone, true)
+  const asUtcMs = Date.UTC(zoned.year, zoned.month - 1, zoned.day, zoned.hour, zoned.minute, zoned.second)
+  return Math.round((asUtcMs - date.getTime()) / (60 * 1000))
+}
+
+function getZonedDateParts(date: Date, timeZone: string, includeTime: boolean = false) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: includeTime ? '2-digit' : undefined,
+    minute: includeTime ? '2-digit' : undefined,
+    second: includeTime ? '2-digit' : undefined,
+    hour12: false,
+  })
+  const parts = formatter.formatToParts(date)
+  const mapped = parts.reduce((acc, part) => {
+    if (part.type !== 'literal') {
+      acc[part.type] = part.value
+    }
+    return acc
+  }, {} as Record<string, string>)
+
+  return {
+    year: Number(mapped.year || 0),
+    month: Number(mapped.month || 1),
+    day: Number(mapped.day || 1),
+    hour: Number(mapped.hour || 0),
+    minute: Number(mapped.minute || 0),
+    second: Number(mapped.second || 0),
+  }
+}
+
+function capForecastGroupsToPointLimit<T>(
+  groups: Array<{ dayStartTimestamp: number; points: T[] }>,
+  maxPoints: number
+) {
+  if (maxPoints <= 0) {
+    return []
+  }
+
+  let remainingPoints = maxPoints
+
+  return groups
+    .map((group) => {
+      if (remainingPoints <= 0) {
+        return null
+      }
+
+      const limitedPoints = group.points.slice(0, remainingPoints)
+      remainingPoints -= limitedPoints.length
+
+      if (limitedPoints.length === 0) {
+        return null
+      }
+
+      return {
+        dayStartTimestamp: group.dayStartTimestamp,
+        points: limitedPoints,
+      }
+    })
+    .filter((group): group is { dayStartTimestamp: number; points: T[] } => Boolean(group))
 }
 
 function buildTemperatureTicks(
