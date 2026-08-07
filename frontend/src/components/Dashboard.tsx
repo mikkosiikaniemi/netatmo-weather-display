@@ -454,7 +454,7 @@ function Dashboard(props: DashboardProps) {
 
               <div className="outdoor-chart-panel rounded-lg bg-zinc-950 p-4 pb-2">
                 {outdoorChartData.length > 0 ? (
-                  <div className="h-60">
+                  <div className="-mx-2 h-60">
                     <ResponsiveContainer width="100%" height="100%" debounce={120}>
                       <ComposedChart data={outdoorChartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
                         <defs>
@@ -578,7 +578,7 @@ function Dashboard(props: DashboardProps) {
                 </p>
 
                 {moduleHistory ? (
-                  <div className="mt-4 h-36">
+                  <div className="-mx-2 mt-2 h-36">
                     <ResponsiveContainer width="100%" height="100%" debounce={120}>
                       <ComposedChart data={moduleSeries} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
                         <defs>
