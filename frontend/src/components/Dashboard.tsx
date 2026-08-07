@@ -659,7 +659,7 @@ function Dashboard(props: DashboardProps) {
               {forecastDayGroups.map((dayGroup) => (
                 <div
                   key={dayGroup.dayStartTimestamp}
-                  className="forecast-grid rounded-lg overflow-hidden bg-zinc-950 px-3 grid grid-cols-2"
+                  className="forecast-grid min-w-0 flex-1 basis-0 rounded-lg overflow-hidden bg-zinc-950 px-3 grid grid-cols-2"
                   style={{ ['--forecast-points-count' as string]: String(Math.max(dayGroup.points.length, 1)) } as React.CSSProperties}
                 >
                   {dayGroup.points.map((point, index) => {
