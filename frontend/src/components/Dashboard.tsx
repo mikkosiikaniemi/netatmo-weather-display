@@ -452,7 +452,7 @@ function Dashboard(props: DashboardProps) {
                 </div>
               </div>
 
-              <div className="outdoor-chart-panel rounded-lg bg-zinc-950 p-4 pb-2">
+              <div className="outdoor-chart-panel rounded-lg bg-zinc-950 p-4 pb-1">
                 {outdoorChartData.length > 0 ? (
                   <div className="-mx-2 h-60">
                     <ResponsiveContainer width="100%" height="100%" debounce={120}>
@@ -552,7 +552,7 @@ function Dashboard(props: DashboardProps) {
               const modulePreviousDayChartData = indoorPreviousDaySeriesById[module.id] || []
 
               return (
-              <article key={module.id} className="rounded-lg bg-zinc-950 p-5 pb-2">
+              <article key={module.id} className="rounded-lg bg-zinc-950 p-5 pt-4 pb-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-start gap-2">
                     <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(module.lastSeenAt)}>{module.name}</p>
@@ -693,7 +693,7 @@ function Dashboard(props: DashboardProps) {
                         <p className={`mb-1 h-4 text-[0.65rem] font-semibold tracking-wide text-zinc-400 ${showWeekdayLabel ? 'opacity-100' : 'opacity-0'}`}>
                           {showWeekdayLabel ? formatWeekdayShort(point.timestamp) : ' '}
                         </p>
-											<p className="text-s text-zinc-300">{formatHour(point.timestamp)}</p>
+											<p className="text-s text-zinc-500">{formatHour(point.timestamp)}</p>
                         <img
                           src={`/yr/${symbolId}.svg`}
                           className="mx-auto mt-2 h-11 w-11"
