@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', 'Noto Sans', 'DejaVu Sans', Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -12,6 +12,7 @@
   background-color: #242424;
 
   font-synthesis: none;
+  font-feature-settings: 'tnum' 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -19,4 +20,9 @@
 
 * {
   box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: inherit;
 }
