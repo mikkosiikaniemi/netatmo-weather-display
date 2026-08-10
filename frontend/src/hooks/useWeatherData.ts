@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import { WeatherOverviewResponse } from '../types/weather'
 
 async function fetchWeatherData(): Promise<WeatherOverviewResponse> {
@@ -11,7 +11,9 @@ async function fetchWeatherData(): Promise<WeatherOverviewResponse> {
 }
 
 export function useWeatherData() {
-  return useQuery('weather-overview', fetchWeatherData, {
+  return useQuery({
+    queryKey: ['weather-overview'],
+    queryFn: fetchWeatherData,
     retry: 1,
     refetchInterval: 10.5 * 60 * 1000,
     refetchOnWindowFocus: true,

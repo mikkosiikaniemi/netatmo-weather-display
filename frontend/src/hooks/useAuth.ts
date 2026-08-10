@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { useQuery, useQueryClient } from 'react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 interface AuthStatus {
   authenticated: boolean
@@ -20,7 +20,9 @@ async function fetchAuthStatus(): Promise<AuthStatus> {
 
 export function useAuth() {
   const queryClient = useQueryClient()
-  const query = useQuery('auth-status', fetchAuthStatus, {
+  const query = useQuery({
+    queryKey: ['auth-status'],
+    queryFn: fetchAuthStatus,
     retry: 1,
   })
 
@@ -30,7 +32,7 @@ export function useAuth() {
 
   const logout = async () => {
     await axios.post('/auth/logout', {}, { withCredentials: true })
-    await queryClient.invalidateQueries('auth-status')
+    await queryClient.invalidateQueries({ queryKey: ['auth-status'] })
   }
 
   const refreshAuth = () => {

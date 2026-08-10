@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react'
-import { QueryClient, QueryClientProvider } from 'react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Loading from './components/Loading'
 import LoginScreen from './components/LoginScreen'
 import { useAuth } from './hooks/useAuth'
