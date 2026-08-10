@@ -151,7 +151,7 @@ const DashboardHeader = React.memo(function DashboardHeader(props: DashboardHead
   return (
     <section className="rounded-lg bg-zinc-950 p-5">
       <div className="grid gap-4 md:grid-cols-[auto_auto_auto] md:items-start">
-        <p className="text-6xl font-normal tracking-tight text-zinc-50">{formatDate(now)}</p>
+        <p className="text-5xl font-normal tracking-tight text-zinc-50">{formatDate(now)}</p>
         <div className="relative flex items-center gap-2 md:justify-center md:self-center">
           <button
             onClick={props.onRefresh}
@@ -211,7 +211,7 @@ const DashboardHeader = React.memo(function DashboardHeader(props: DashboardHead
             </div>
           ) : null}
         </div>
-        <p className="text-6xl font-bold tabular-nums text-zinc-100 md:justify-self-end md:text-right">{formatClock(now)}</p>
+        <p className="text-5xl tabular-nums text-zinc-100 md:justify-self-end md:text-right">{formatClock(now)}</p>
       </div>
     </section>
   )
