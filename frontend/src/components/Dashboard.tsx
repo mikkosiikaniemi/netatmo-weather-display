@@ -463,7 +463,7 @@ function Dashboard(props: DashboardProps) {
                             <stop offset="100%" stopColor={TEMP_COLOR} stopOpacity={0.2} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid stroke="rgba(161,161,170,0.2)" strokeDasharray="3 3" />
+                        <CartesianGrid stroke="rgba(161,161,170,0.2)" strokeDasharray="3 3" yAxisId="temp" />
                         <XAxis
                           type="number"
                           dataKey="timestamp"
@@ -482,14 +482,13 @@ function Dashboard(props: DashboardProps) {
                           stroke="rgba(161,161,170,0.22)"
                           domain={outdoorTemperatureDomain}
                           ticks={outdoorTemperatureTicks}
-                          interval={0}
                           tickFormatter={(value: number | string) =>
                             formatTemperatureTickLabel(value, outdoorTemperatureDomain)
                           }
                           tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }}
-                          width={32}
+													interval={0}
+                          width="auto"
                         />
-                        <YAxis yAxisId="humidity" hide domain={[0, 100]} />
                         <YAxis
                           yAxisId="rain"
                           orientation="right"
@@ -587,7 +586,7 @@ function Dashboard(props: DashboardProps) {
                             <stop offset="100%" stopColor={TEMP_COLOR} stopOpacity={0.2} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid stroke="rgba(161,161,170,0.22)" strokeDasharray="2 3" />
+                        <CartesianGrid stroke="rgba(161,161,170,0.22)" strokeDasharray="2 3" yAxisId="temp" />
                         <XAxis
                           type="number"
                           dataKey="timestamp"
