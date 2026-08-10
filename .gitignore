@@ -1,3 +1,4 @@
 .env
+.env.deploy
 node_modules
 vendor
