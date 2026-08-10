@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Area, Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useForecastData } from '../hooks/useForecastData'
 import { useWeatherData } from '../hooks/useWeatherData'
 import { useStationHistory } from '../hooks/useStationHistory'
-import { ModuleHistory } from '../types/weather'
+import { ModuleHistory, StationHistoryResponse } from '../types/weather'
 
 const QUERY_REFETCH_INTERVAL_MS = 10.5 * 60 * 1000
 
@@ -224,33 +224,79 @@ function Dashboard(props: DashboardProps) {
   const selectedStation = stations.length > 0 ? stations[0] : null
   const selectedStationId = selectedStation ? selectedStation.id : null
   const historyQuery = useStationHistory(selectedStationId)
+  const moduleHistoryCacheByStationRef = useRef<Record<string, Record<string, ModuleHistory>>>({})
+
+  useEffect(() => {
+    if (!historyQuery.data) {
+      return
+    }
+
+    const stationId = historyQuery.data.stationId
+    const stationCache = moduleHistoryCacheByStationRef.current[stationId] || {}
+
+    historyQuery.data.modules.forEach((module) => {
+      if (moduleHasRenderableHistory(module)) {
+        stationCache[module.moduleId] = module
+      }
+    })
+
+    moduleHistoryCacheByStationRef.current[stationId] = stationCache
+  }, [historyQuery.data])
+
+  const effectiveHistoryData = useMemo<StationHistoryResponse | null>(() => {
+    if (!historyQuery.data) {
+      return null
+    }
+
+    const stationCache = moduleHistoryCacheByStationRef.current[historyQuery.data.stationId] || {}
+    const modulesById: Record<string, ModuleHistory> = {}
+
+    historyQuery.data.modules.forEach((module) => {
+      modulesById[module.moduleId] = module
+    })
+
+    historyQuery.data.failedModuleIds.forEach((moduleId) => {
+      if (!modulesById[moduleId] && stationCache[moduleId]) {
+        modulesById[moduleId] = {
+          ...stationCache[moduleId],
+          historyFetchFailed: true,
+        }
+      }
+    })
+
+    return {
+      ...historyQuery.data,
+      modules: Object.values(modulesById),
+    }
+  }, [historyQuery.data])
 
   const stationModules = selectedStation ? selectedStation.modules : []
   const outdoorModule = stationModules.find((module) => module.type === 'outdoor') || null
   const indoorModules = stationModules.filter((module) => module.type === 'indoor')
   const failedHistoryModuleIds = useMemo(
-    () => new Set(historyQuery.data ? historyQuery.data.failedModuleIds : []),
-    [historyQuery.data]
+    () => new Set(effectiveHistoryData ? effectiveHistoryData.failedModuleIds : []),
+    [effectiveHistoryData]
   )
-  const outdoorHistory = historyQuery.data
-    ? historyQuery.data.modules.find((module) => module.moduleId === (outdoorModule ? outdoorModule.id : '')) || null
+  const outdoorHistory = effectiveHistoryData
+    ? effectiveHistoryData.modules.find((module) => module.moduleId === (outdoorModule ? outdoorModule.id : '')) || null
     : null
+  const outdoorHasCachedData = Boolean(outdoorHistory && moduleHasRenderableHistory(outdoorHistory))
   const outdoorHistoryFetchFailed = Boolean(
     outdoorModule && (failedHistoryModuleIds.has(outdoorModule.id) || (outdoorHistory && outdoorHistory.historyFetchFailed))
   )
   const indoorHistoryById = useMemo(() => {
     const map: Record<string, ModuleHistory> = {}
 
-    if (!historyQuery.data) {
+    if (!effectiveHistoryData) {
       return map
     }
 
-    historyQuery.data.modules.forEach((module) => {
+    effectiveHistoryData.modules.forEach((module) => {
       map[module.moduleId] = module
     })
 
     return map
-  }, [historyQuery.data])
+  }, [effectiveHistoryData])
   const indoorSeriesById = useMemo(() => {
     const map: Record<string, ReturnType<typeof mergeIndoorSeries>> = {}
 
@@ -396,7 +442,13 @@ function Dashboard(props: DashboardProps) {
                   <div className="flex items-start gap-2">
                     <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(outdoorModule.lastSeenAt)}>{outdoorModule.name}</p>
                     {outdoorHistoryFetchFailed ? (
-                      <HistoryWarningIcon message="Outdoor history fetch failed. Showing last cached values." />
+                      <HistoryWarningIcon
+                        message={
+                          outdoorHasCachedData
+                            ? 'Outdoor history fetch failed. Showing last cached values.'
+                            : 'Outdoor history fetch failed. No cached outdoor history is available yet.'
+                        }
+                      />
                     ) : null}
                   </div>
                   <div className="flex items-center gap-1 text-sm text-zinc-300" title={outdoorModule.humidity !== null ? 'Humidity: ' + outdoorModule.humidity + '%' : 'Humidity unavailable'}>
@@ -530,7 +582,9 @@ function Dashboard(props: DashboardProps) {
                     {historyQuery.isLoading
                       ? 'Loading outdoor history...'
                       : outdoorHistoryFetchFailed
-                        ? 'Outdoor history fetch failed. Showing cached data until a successful refresh.'
+                        ? outdoorHasCachedData
+                          ? 'Outdoor history fetch failed. Showing cached data until a successful refresh.'
+                          : 'Outdoor history fetch failed. No cached outdoor history is available yet.'
                         : historyQuery.isError
                         ? 'Outdoor history request failed. Netatmo data may be unavailable.'
                         : 'Outdoor history not available yet.'}
@@ -548,6 +602,7 @@ function Dashboard(props: DashboardProps) {
               const moduleHistory = indoorHistoryById[module.id] || null
               const moduleSeries = indoorSeriesById[module.id] || []
               const moduleHistoryFetchFailed = failedHistoryModuleIds.has(module.id) || Boolean(moduleHistory && moduleHistory.historyFetchFailed)
+              const moduleHasCachedData = Boolean(moduleHistory && moduleHasRenderableHistory(moduleHistory))
               const modulePreviousDayChartData = indoorPreviousDaySeriesById[module.id] || []
 
               return (
@@ -556,7 +611,13 @@ function Dashboard(props: DashboardProps) {
                   <div className="flex items-start gap-2">
                     <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(module.lastSeenAt)}>{module.name}</p>
                     {moduleHistoryFetchFailed ? (
-                      <HistoryWarningIcon message="History fetch failed. Showing last cached values." />
+                      <HistoryWarningIcon
+                        message={
+                          moduleHasCachedData
+                            ? 'History fetch failed. Showing last cached values.'
+                            : 'History fetch failed. No cached values are available yet.'
+                        }
+                      />
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-zinc-300">
@@ -648,7 +709,9 @@ function Dashboard(props: DashboardProps) {
                     {historyQuery.isLoading
                       ? 'Loading history...'
                       : moduleHistoryFetchFailed
-                        ? 'History fetch failed. Showing cached data until a successful refresh.'
+                        ? moduleHasCachedData
+                          ? 'History fetch failed. Showing cached data until a successful refresh.'
+                          : 'History fetch failed. No cached data available for this module yet.'
                         : historyQuery.isError
                         ? 'History request failed. Netatmo data may be unavailable.'
                         : 'History not available.'}
@@ -1025,6 +1088,15 @@ function mapPreviousDayTemperatureSeries(module: ModuleHistory) {
     timestamp: point.timestamp,
     temperature: point.value,
   }))
+}
+
+function moduleHasRenderableHistory(module: ModuleHistory) {
+  return (
+    module.recentTemperatures.some((point) => typeof point.value === 'number') ||
+    module.earlierTemperatures.some((point) => typeof point.value === 'number') ||
+    module.humidity.some((point) => typeof point.value === 'number') ||
+    module.rain.some((point) => typeof point.value === 'number')
+  )
 }
 
 function getSharedIndoorTemperatureDomain(
