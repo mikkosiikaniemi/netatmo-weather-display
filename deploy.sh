@@ -107,8 +107,14 @@ fi
 
 cd "$OPALSTACK_PROJECT_DIR"
 
-npm --prefix frontend ci
-npm --prefix backend ci
+# Deploy project npm policy to both package roots so installs use repo-pinned config.
+if [ -f "$OPALSTACK_PROJECT_DIR/.npmrc" ]; then
+  cp "$OPALSTACK_PROJECT_DIR/.npmrc" "$OPALSTACK_PROJECT_DIR/frontend/.npmrc"
+  cp "$OPALSTACK_PROJECT_DIR/.npmrc" "$OPALSTACK_PROJECT_DIR/backend/.npmrc"
+fi
+
+(cd frontend && npm ci)
+(cd backend && npm ci)
 
 npm --prefix frontend run build
 npm --prefix backend run build
