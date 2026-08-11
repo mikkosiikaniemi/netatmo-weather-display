@@ -150,9 +150,9 @@ const DashboardHeader = React.memo(function DashboardHeader(props: DashboardHead
 
   return (
     <section className="rounded-lg bg-zinc-950 p-5">
-      <div className="grid gap-4 md:grid-cols-[auto_auto_auto] md:items-start">
-        <p className="text-5xl font-normal tracking-tight text-zinc-50">{formatDate(now)}</p>
-        <div className="relative flex items-center gap-2 md:justify-center md:self-center">
+      <div className="grid gap-4 grid-cols-[auto_auto_auto] items-center">
+        <p className="text-2xl md:text-5xl font-normal tracking-tight text-zinc-50">{formatDate(now)}</p>
+        <div className="relative flex items-center gap-2 justify-center self-center">
           <button
             onClick={props.onRefresh}
             className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
@@ -211,7 +211,7 @@ const DashboardHeader = React.memo(function DashboardHeader(props: DashboardHead
             </div>
           ) : null}
         </div>
-        <p className="text-5xl tabular-nums text-zinc-100 md:justify-self-end md:text-right">{formatClock(now)}</p>
+        <p className="text-2xl md:text-5xl tabular-nums text-zinc-100 justify-self-end md:text-right">{formatClock(now)}</p>
       </div>
     </section>
   )
@@ -606,39 +606,42 @@ function Dashboard(props: DashboardProps) {
               const modulePreviousDayChartData = indoorPreviousDaySeriesById[module.id] || []
 
               return (
-              <article key={module.id} className="rounded-lg bg-zinc-950 p-5 pt-4 pb-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-start gap-2">
-                    <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(module.lastSeenAt)}>{module.name}</p>
-                    {moduleHistoryFetchFailed ? (
-                      <HistoryWarningIcon
-                        message={
-                          moduleHasCachedData
-                            ? 'History fetch failed. Showing last cached values.'
-                            : 'History fetch failed. No cached values are available yet.'
-                        }
-                      />
-                    ) : null}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-zinc-300">
-                    <span className="inline-flex items-center gap-1" title={module.humidity !== null ? 'Humidity: ' + module.humidity + '%' : 'Humidity unavailable'}>
-                      <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
-                      </svg>
-                      <span>{module.humidity !== null ? module.humidity + '%' : '--'}</span>
-                    </span>
-                    <span
-                      className={'h-4 w-4 rounded-full ' + getCo2Class(module.co2)}
-                      title={module.co2 !== null ? 'CO2: ' + module.co2 + ' ppm' : 'CO2 unavailable'}
-                    ></span>
-                  </div>
-                </div>
-                <p className="mt-2 text-7xl font-bold leading-none text-center">
-                  <TemperatureReading value={module.temperature} />
-                </p>
+              <article key={module.id} className="rounded-lg bg-zinc-950 p-5 pt-4 pb-1 flex flex-row md:flex-col gap-2">
+								<div className="text-data">
+									<div className="flex items-center justify-between">
+										<div className="flex items-start gap-2">
+											<p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(module.lastSeenAt)}>{module.name}</p>
+											{moduleHistoryFetchFailed ? (
+												<HistoryWarningIcon
+													message={
+														moduleHasCachedData
+															? 'History fetch failed. Showing last cached values.'
+															: 'History fetch failed. No cached values are available yet.'
+													}
+												/>
+											) : null}
+										</div>
+										<div className="flex items-center gap-2 text-sm text-zinc-300">
+											<span className="inline-flex items-center gap-1" title={module.humidity !== null ? 'Humidity: ' + module.humidity + '%' : 'Humidity unavailable'}>
+												<svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+													<path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
+												</svg>
+												<span>{module.humidity !== null ? module.humidity + '%' : '--'}</span>
+											</span>
+											<span
+												className={'h-4 w-4 rounded-full ' + getCo2Class(module.co2)}
+												title={module.co2 !== null ? 'CO2: ' + module.co2 + ' ppm' : 'CO2 unavailable'}
+											></span>
+										</div>
+									</div>
+
+									<p className="mt-2 text-7xl font-bold leading-none text-center">
+										<TemperatureReading value={module.temperature} />
+									</p>
+								</div>
 
                 {moduleHistory ? (
-                  <div className="-mx-2 mt-2 h-36">
+                  <div className="-mx-2 h-36 flex-auto">
                     <ResponsiveContainer width="100%" height="100%" debounce={120}>
                       <ComposedChart data={moduleSeries} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
                         <defs>

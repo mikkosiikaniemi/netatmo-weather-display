@@ -95,12 +95,12 @@
 	font-variant-numeric: tabular-nums;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
 	.indoor-modules-grid {
 		grid-template-columns: repeat(var(--indoor-modules-count, 1), minmax(0, 1fr)) !important;
 	}
+}
 
-	.forecast-grid {
-		grid-template-columns: repeat(var(--forecast-points-count, 1), minmax(0, 1fr)) !important;
-	}
+.forecast-grid {
+	grid-template-columns: repeat(var(--forecast-points-count, 1), minmax(0, 1fr)) !important;
 }
