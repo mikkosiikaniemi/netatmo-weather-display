@@ -96,14 +96,6 @@
 }
 
 @media (min-width: 900px) {
-	.outdoor-overview-grid {
-		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-	}
-
-	.outdoor-chart-panel {
-		grid-column: span 2 / span 2;
-	}
-
 	.indoor-modules-grid {
 		grid-template-columns: repeat(var(--indoor-modules-count, 1), minmax(0, 1fr)) !important;
 	}

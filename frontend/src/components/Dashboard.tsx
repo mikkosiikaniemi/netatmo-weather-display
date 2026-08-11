@@ -434,10 +434,10 @@ function Dashboard(props: DashboardProps) {
           historyFetchedAt={historyQuery.data ? historyQuery.data.fetchedAt : null}
         />
 
-        <div className="mt-4">
+        <div className="mt-4 rounded-lg p-5 bg-zinc-950">
           {outdoorModule ? (
-            <div className="outdoor-overview-grid grid grid-cols-1 gap-4">
-              <div className="flex flex-col rounded-lg bg-zinc-950 p-5">
+            <div className="outdoor-overview-grid grid grid-cols-5 gap-4">
+              <div className="flex flex-col col-span-2">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2">
                     <p className="text-lg font-semibold text-zinc-100" title={'Last seen: ' + formatLastSeen(outdoorModule.lastSeenAt)}>{outdoorModule.name}</p>
@@ -459,7 +459,7 @@ function Dashboard(props: DashboardProps) {
                   </div>
                 </div>
                 <div className="flex flex-1 items-center justify-center">
-                  <p className="text-center text-[clamp(6.25rem,18vw,9.5rem)] font-bold leading-none text-zinc-100">
+                  <p className="text-center text-[clamp(6.25rem,19vw,11.5rem)] font-bold leading-none text-zinc-100">
                     <TemperatureReading value={outdoorModule.temperature} />
                   </p>
                 </div>
@@ -504,7 +504,7 @@ function Dashboard(props: DashboardProps) {
                 </div>
               </div>
 
-              <div className="outdoor-chart-panel rounded-lg bg-zinc-950 p-4 pb-1">
+              <div className="outdoor-chart-panel rounded-lg bg-zinc-950 px-4 -mb-3 col-span-3">
                 {outdoorChartData.length > 0 ? (
                   <div className="-mx-2 h-60">
                     <ResponsiveContainer width="100%" height="100%" debounce={120}>
