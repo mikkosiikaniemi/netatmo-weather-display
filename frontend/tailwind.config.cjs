@@ -9,7 +9,8 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['Inter', 'Noto Sans', 'DejaVu Sans', 'Arial', 'sans-serif'],
-        mono: ['JetBrains Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'monospace'],
+        mono: ['ui-monospace', 'DejaVu Sans Mono', 'Liberation Mono', 'monospace'],
+        temperature: ['Inter Tight', 'Inter', 'Noto Sans', 'DejaVu Sans', 'Arial', 'sans-serif'],
       },
       colors: {
         'netatmo-dark': '#1a1a1a',

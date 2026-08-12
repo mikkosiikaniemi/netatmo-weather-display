@@ -822,9 +822,9 @@ function TemperatureReading(props: { value: number | null }) {
   const [mainDigits, fractionalDigit = '0'] = props.value.toFixed(1).split('.')
 
   return (
-    <span className="inline-flex items-baseline gap-1 font-mono tracking-tight">
+    <span className="inline-flex items-baseline gap-1 font-temperature font-normal tracking-tight">
       {mainDigits}
-      <span className="align-bottom text-[0.5em] tracking-[-.1em] opacity-40">{fractionalDigit}°</span>
+      <span className="align-bottom text-[0.5em] opacity-40">{fractionalDigit}°</span>
     </span>
   )
 }
