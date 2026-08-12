@@ -370,6 +370,22 @@ function Dashboard(props: DashboardProps) {
 
     return Math.max(3, Math.ceil(maxRainValue * 2) / 2)
   }, [outdoorChartData])
+  const outdoorRainTodayAmount = useMemo(() => {
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayStartTimestamp = todayStart.getTime()
+    const tomorrowStartTimestamp = todayStartTimestamp + 24 * 60 * 60 * 1000
+
+    return outdoorChartData.reduce((sum, point) => {
+      if (point.timestamp < todayStartTimestamp || point.timestamp >= tomorrowStartTimestamp) {
+        return sum
+      }
+
+      const rainValue = typeof point.rain === 'number' ? point.rain : 0
+      return sum + Math.max(0, rainValue)
+    }, 0)
+  }, [outdoorChartData])
+  const hasOutdoorRainToday = outdoorRainTodayAmount > 0
   const outdoorTemperatureTicks = useMemo(
     () => buildTemperatureTicks(outdoorTemperatureDomain, 5),
     [outdoorTemperatureDomain]
@@ -483,18 +499,17 @@ function Dashboard(props: DashboardProps) {
                     </svg>
                     <span>{outdoorModule.maxTemperature !== null ? outdoorModule.maxTemperature.toFixed(1) + '°' : '--'}</span>
                   </span>
-                  <span
-                    className="inline-flex items-center gap-1"
-                    title={
-                      'Rain 24h: ' +
-                      (outdoorModule.rainLast24Hours !== null ? outdoorModule.rainLast24Hours + ' mm' : '--')
-                    }
-                  >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
-                    </svg>
-                    <span>{outdoorModule.rainLast24Hours !== null ? outdoorModule.rainLast24Hours + ' mm' : '--'}</span>
-                  </span>
+                  {hasOutdoorRainToday ? (
+                    <span
+                      className="inline-flex items-center gap-1"
+                      title={'Rain today: ' + outdoorRainTodayAmount.toFixed(1) + ' mm'}
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
+                      </svg>
+                      <span>{outdoorRainTodayAmount.toFixed(1) + ' mm'}</span>
+                    </span>
+                  ) : null}
                   <span
                     className="inline-flex items-center gap-1"
                     title={outdoorModule.humidity !== null ? 'Humidity: ' + outdoorModule.humidity + '%' : 'Humidity unavailable'}
@@ -544,16 +559,18 @@ function Dashboard(props: DashboardProps) {
 													interval={0}
                           width="auto"
                         />
-                        <YAxis
-                          yAxisId="rain"
-                          orientation="right"
-                          domain={[0, outdoorRainAxisMax]}
-                          stroke="rgba(161,161,170,0.22)"
-                          tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }}
-                          tickFormatter={(value: number) => `${value.toFixed(1)}`}
-                          width={42}
-                          label={{ value: 'Rain mm', angle: -90, position: 'insideRight', fill: 'rgba(161,161,170,0.68)', fontSize: 10 }}
-                        />
+                        {hasOutdoorRainToday ? (
+                          <YAxis
+                            yAxisId="rain"
+                            orientation="right"
+                            domain={[0, outdoorRainAxisMax]}
+                            stroke="rgba(161,161,170,0.22)"
+                            tick={{ fontSize: 10, fill: 'rgba(161,161,170,0.68)' }}
+                            tickFormatter={(value: number) => `${value.toFixed(1)}`}
+                            width={42}
+                            label={{ value: 'Rain mm', angle: -90, position: 'insideRight', fill: 'rgba(161,161,170,0.68)', fontSize: 10 }}
+                          />
+                        ) : null}
                         <Tooltip content={<OutdoorChartTooltip />} />
                         <Line yAxisId="humidity" type="monotone" dataKey="humidity" stroke={HUMIDITY_COLOR} strokeWidth={1.8} dot={false} strokeOpacity={0.45} isAnimationActive={false} />
                         <Area yAxisId="temp" type="monotone" dataKey="temperature" fill="url(#outdoorTempFill)" fillOpacity={1} stroke={TEMP_COLOR} strokeWidth={2.2} dot={false} isAnimationActive={false} />
@@ -569,14 +586,16 @@ function Dashboard(props: DashboardProps) {
                           dot={false}
                           isAnimationActive={false}
                         />
-                        <Bar
-                          yAxisId="rain"
-                          dataKey="rain"
-                          name="Rain mm"
-                          fill={FORECAST_RAIN_COLOR}
-                          shape={<RainBarShape />}
-                          isAnimationActive={false}
-                        />
+                        {hasOutdoorRainToday ? (
+                          <Bar
+                            yAxisId="rain"
+                            dataKey="rain"
+                            name="Rain mm"
+                            fill={FORECAST_RAIN_COLOR}
+                            shape={<RainBarShape />}
+                            isAnimationActive={false}
+                          />
+                        ) : null}
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
