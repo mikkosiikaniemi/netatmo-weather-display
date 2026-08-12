@@ -451,12 +451,6 @@ function Dashboard(props: DashboardProps) {
                       />
                     ) : null}
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-zinc-300" title={outdoorModule.humidity !== null ? 'Humidity: ' + outdoorModule.humidity + '%' : 'Humidity unavailable'}>
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
-                    </svg>
-                    <span>{outdoorModule.humidity !== null ? outdoorModule.humidity + '%' : '--'}</span>
-                  </div>
                 </div>
                 <div className="flex flex-1 items-center justify-center">
                   <p className="text-center text-[clamp(6.25rem,19vw,11.5rem)] font-bold leading-none text-zinc-100">
@@ -500,6 +494,15 @@ function Dashboard(props: DashboardProps) {
                       <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
                     </svg>
                     <span>{outdoorModule.rainLast24Hours !== null ? outdoorModule.rainLast24Hours + ' mm' : '--'}</span>
+                  </span>
+                  <span
+                    className="inline-flex items-center gap-1"
+                    title={outdoorModule.humidity !== null ? 'Humidity: ' + outdoorModule.humidity + '%' : 'Humidity unavailable'}
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-zinc-400 opacity-50" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11Z" />
+                    </svg>
+                    <span>{outdoorModule.humidity !== null ? outdoorModule.humidity + '%' : '--'}</span>
                   </span>
                 </div>
               </div>
