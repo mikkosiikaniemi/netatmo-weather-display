@@ -3,7 +3,7 @@ import express = require('express');
 import { SessionData } from '../types/auth';
 
 const SESSION_COOKIE_NAME = 'netatmo.sid';
-const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const store = new Map<string, SessionData>();
 
 function generateSessionId(): string {
@@ -39,6 +39,14 @@ export function getSession(req: express.Request): SessionData | null {
   return store.get(sessionId) || null;
 }
 
+export function touchSession(req: express.Request, res: express.Response): void {
+  const sessionId = getSessionId(req);
+
+  if (sessionId) {
+    res.cookie(SESSION_COOKIE_NAME, sessionId, getCookieOptions());
+  }
+}
+
 export function ensureSession(req: express.Request, res: express.Response): { sessionId: string; session: SessionData } {
   const existingSessionId = getSessionId(req);
 
@@ -46,6 +54,7 @@ export function ensureSession(req: express.Request, res: express.Response): { se
     const existingSession = store.get(existingSessionId);
 
     if (existingSession) {
+      touchSession(req, res);
       return { sessionId: existingSessionId, session: existingSession };
     }
   }

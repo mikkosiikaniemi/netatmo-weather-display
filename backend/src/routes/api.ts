@@ -1,6 +1,6 @@
 import express = require('express');
 import { refreshSessionToken, tokenNeedsRefresh } from '../services/netatmoAuth';
-import { getSession, getSessionId, saveSession } from '../services/sessionStore';
+import { getSession, getSessionId, saveSession, touchSession } from '../services/sessionStore';
 import { NetatmoService } from '../services/netatmoService';
 
 const router = express.Router();
@@ -16,7 +16,7 @@ router.get('/weather', async (req, res, next) => {
       return;
     }
 
-    const activeSession = await ensureFreshSession(sessionId, session);
+    const activeSession = await ensureFreshSession(sessionId, session, req, res);
     const payload = await netatmoService.getWeatherOverview(activeSession);
 
     res.json(payload);
@@ -35,7 +35,7 @@ router.get('/weather/:stationId/history', async (req, res, next) => {
       return;
     }
 
-    const activeSession = await ensureFreshSession(sessionId, session);
+    const activeSession = await ensureFreshSession(sessionId, session, req, res);
     const payload = await netatmoService.getStationHistory(activeSession, req.params.stationId);
 
     res.json(payload);
@@ -54,7 +54,7 @@ router.get('/forecast', async (req, res, next) => {
       return;
     }
 
-    const activeSession = await ensureFreshSession(sessionId, session);
+    const activeSession = await ensureFreshSession(sessionId, session, req, res);
     const payload = await netatmoService.getForecast(activeSession);
 
     res.json(payload);
@@ -63,13 +63,15 @@ router.get('/forecast', async (req, res, next) => {
   }
 });
 
-async function ensureFreshSession(sessionId: string, session: any) {
+async function ensureFreshSession(sessionId: string, session: any, req: express.Request, res: express.Response) {
   if (!tokenNeedsRefresh(session)) {
+    touchSession(req, res);
     return session;
   }
 
   const refreshed = await refreshSessionToken(session);
   saveSession(sessionId, refreshed);
+  touchSession(req, res);
 
   return refreshed;
 }
