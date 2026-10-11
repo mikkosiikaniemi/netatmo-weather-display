@@ -85,6 +85,7 @@ rsync -az --delete \
   --exclude='backend/node_modules/' \
   --exclude='frontend/node_modules/' \
   --exclude='backend/.env' \
+  --exclude='backend/data/' \
   --exclude='frontend/dist/' \
   --exclude='backend/dist/' \
   "$SCRIPT_DIR/" "$OPALSTACK_SSH:$OPALSTACK_PROJECT_DIR/"

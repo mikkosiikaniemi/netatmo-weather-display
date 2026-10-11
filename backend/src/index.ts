@@ -4,6 +4,7 @@ import cors = require('cors');
 import path = require('path');
 import authRoutes = require('./routes/auth');
 import apiRoutes = require('./routes/api');
+import sensorRoutes = require('./routes/sensors');
 
 require('dotenv').config();
 
@@ -28,6 +29,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/auth', authRoutes);
+app.use('/api/sensors', sensorRoutes);
 app.use('/api', apiRoutes);
 
 if (process.env.NODE_ENV === 'production') {

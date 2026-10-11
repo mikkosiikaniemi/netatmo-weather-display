@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Area, Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useForecastData } from '../hooks/useForecastData'
+import { useSensorReadings } from '../hooks/useSensorReadings'
 import { useWeatherData } from '../hooks/useWeatherData'
 import { useStationHistory } from '../hooks/useStationHistory'
+import { SensorReadingCard, groupReadingsByDevice } from './SensorReadingsWidget'
 import { ModuleHistory, StationHistoryResponse } from '../types/weather'
 
 const QUERY_REFETCH_INTERVAL_MS = 10.5 * 60 * 1000
@@ -220,6 +222,11 @@ const DashboardHeader = React.memo(function DashboardHeader(props: DashboardHead
 function Dashboard(props: DashboardProps) {
   const weatherQuery = useWeatherData()
   const forecastQuery = useForecastData()
+  const sensorQuery = useSensorReadings()
+  const sensorDevices = useMemo(
+    () => groupReadingsByDevice(sensorQuery.data ? sensorQuery.data.readings : []),
+    [sensorQuery.data]
+  )
   const stations = weatherQuery.data ? weatherQuery.data.stations : []
   const selectedStation = stations.length > 0 ? stations[0] : null
   const selectedStationId = selectedStation ? selectedStation.id : null
@@ -435,8 +442,8 @@ function Dashboard(props: DashboardProps) {
     return capForecastGroupsToPointLimit(compactedGroups, FORECAST_MAX_POINTS)
   }, [forecastQuery.data])
   const indoorGridStyle = useMemo(
-    () => ({ ['--indoor-modules-count' as string]: String(Math.max(indoorModules.length, 1)) }) as React.CSSProperties,
-    [indoorModules.length]
+    () => ({ ['--indoor-modules-count' as string]: String(Math.max(indoorModules.length + sensorDevices.length, 1)) }) as React.CSSProperties,
+    [indoorModules.length, sensorDevices.length]
   )
   return (
     <div className="min-h-screen bg-black text-zinc-100">
@@ -745,6 +752,9 @@ function Dashboard(props: DashboardProps) {
               </article>
               )
             })}
+            {sensorDevices.map((device) => (
+              <SensorReadingCard key={device.deviceId} device={device} dayWindow={dayWindow} evenHourTicks={evenHourTicks} />
+            ))}
         </div>
 
         <div className="mt-4">

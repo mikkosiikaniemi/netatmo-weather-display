@@ -69,6 +69,8 @@ NETATMO_CLIENT_ID=...
 NETATMO_CLIENT_SECRET=...
 NETATMO_REDIRECT_URI=https://your-domain.com/auth/callback
 HISTORY_TIMEZONE=Europe/Helsinki
+# Shared token for the sensor ingest API (see "Sensor ingest API" below)
+SENSOR_INGEST_TOKEN=generate-a-long-random-value
 # Optional forecast location override (otherwise first Netatmo station location is used)
 # FORECAST_LAT=60.192059
 # FORECAST_LON=24.945831
@@ -79,6 +81,69 @@ HISTORY_TIMEZONE=Europe/Helsinki
 
 - Keep your process running with a process manager like PM2 or systemd.
 - You can place Nginx in front for TLS and domain routing, but the app works with one Node process out of the box.
+
+## Sensor ingest API (e.g. IKEA TIMMERFLOTTE via Apple Shortcuts)
+
+The backend exposes an ingest endpoint so external automations (for example an Apple Shortcuts automation reading a Matter/Home accessory such as the IKEA TIMMERFLOTTE temperature/humidity sensor) can push readings to the app. Readings are stored for 48 hours and served back through read endpoints.
+
+### Configuration
+
+Set a shared secret token in `backend/.env` (see `backend/.env.example`):
+
+```env
+SENSOR_INGEST_TOKEN=generate-a-long-random-value
+```
+
+Generate one with `openssl rand -hex 32`. If the variable is unset, the ingest endpoint returns `503`.
+
+### Endpoints
+
+| Method | Path | Auth | Description |
+| --- | --- | --- | --- |
+| `POST` | `/api/sensors/ingest` | Token | Store a reading. |
+| `GET` | `/api/sensors/readings` | Token or session | All readings from the last 48 hours (optional `?deviceId=`). |
+| `GET` | `/api/sensors/latest` | Token or session | The newest reading (optional `?deviceId=`). |
+
+The token is sent either as an `X-Api-Token: <token>` header or as a `?token=<token>` query parameter.
+
+### POST body
+
+`Content-Type: application/json` or form-encoded. All fields are optional, but send at least one measurement:
+
+```json
+{
+  "temperature": 21.4,
+  "humidity": 44,
+  "battery": 90,
+  "deviceId": "timmerflotte-livingroom",
+  "name": "Living room"
+}
+```
+
+- `temperature`, `humidity`, `battery` are also accepted under aliases (`temp`, `temperatureCelsius`, `relativeHumidity`, `batteryLevel`) and any numeric field is stored verbatim under `values`.
+- `deviceId` defaults to `timmerflotte`.
+- `timestamp` (epoch seconds or milliseconds) is optional; server receipt time is used otherwise.
+
+Example:
+
+```bash
+curl -X POST "https://your-domain.com/api/sensors/ingest" \
+  -H "X-Api-Token: $SENSOR_INGEST_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"temperature":21.4,"humidity":44}'
+```
+
+### Apple Shortcuts automation
+
+1. Create a Personal Automation (e.g. time-based) in the Shortcuts app.
+2. Add an action to read the sensor value (Home app accessory state) and, if needed, format it to a number.
+3. Add **Get contents of URL**:
+   - URL: `https://your-domain.com/api/sensors/ingest`
+   - Method: `POST`
+   - Request body: `JSON` with `{"temperature": [temperature], "humidity": [humidity]}`
+   - Headers: `X-Api-Token: <your token>` (or append `?token=<your token>` to the URL).
+
+Readings persist in `backend/data/sensor-readings.json` (gitignored), so history survives restarts.
 
 ## Opalstack one-command updates from local machine
 
