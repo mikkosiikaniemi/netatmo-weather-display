@@ -7,6 +7,7 @@ export default defineConfig({
     rolldownOptions: {
       checks: {
         pluginTimings: false,
+        moduleLevelDirective: false,
       },
     },
   },
